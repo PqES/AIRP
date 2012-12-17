@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Airptool
+Bundle-SymbolicName: airptool; singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: airptool.Activator
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ org.eclipse.jdt.core;bundle-version="3.8.1",
+ org.eclipse.core.resources;bundle-version="3.8.0"
+Bundle-ActivationPolicy: lazy
+Bundle-ClassPath: .,
+ commons-collections-3.2.1.jar,
+ guava-14.0-rc1.jar
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
