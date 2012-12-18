@@ -108,17 +108,6 @@ public class SuitableModule {
 			 */
 			final Collection<? extends Object> dependenciesPackageUnderAnalysis = packagesDependencies.get(respectiveModuleName);
 
-//			System.out.println("Origem " + dependenciesClassUnderAnalysis.size());
-//			for (Object o : dependenciesClassUnderAnalysis){
-//				System.out.println(o);
-//			}
-//			
-//			System.out.println("Destino " + dependenciesPackageUnderAnalysis.size());
-//			for (Object o : dependenciesPackageUnderAnalysis){
-//				System.out.println(o);
-//			}
-			
-			
 			int a = CollectionUtils.intersection(dependenciesClassUnderAnalysis, dependenciesPackageUnderAnalysis).size(); // numberAB
 			int b = CollectionUtils.subtract(dependenciesClassUnderAnalysis, dependenciesPackageUnderAnalysis).size(); // numberAsubB
 			int c = CollectionUtils.subtract(dependenciesPackageUnderAnalysis, dependenciesClassUnderAnalysis).size(); // numberBsubA

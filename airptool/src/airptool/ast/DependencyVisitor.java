@@ -84,7 +84,7 @@ public class DependencyVisitor extends ASTVisitor {
 							&& t.getFullyQualifiedName().equals(node.getSuperclassType().resolveBinding().getQualifiedName())) {
 						this.dependencies.add(new Object[] { DependencyType.EXTEND, t.getFullyQualifiedName() });
 					} else {
-						this.dependencies.add(new Object[] { DependencyType.EXTEND, t.getFullyQualifiedName() });
+						//this.dependencies.add(new Object[] { DependencyType.EXTEND, t.getFullyQualifiedName() });
 					}
 				}
 
@@ -117,7 +117,7 @@ public class DependencyVisitor extends ASTVisitor {
 							break;
 						}
 					}
-					this.dependencies.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName() });
+					//this.dependencies.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName() });
 				}
 			} catch (JavaModelException e) {
 				throw new RuntimeException("AST Parser error.", e);
@@ -243,7 +243,8 @@ public class DependencyVisitor extends ASTVisitor {
 			} else {
 				if (node.getReturnType2().resolveBinding().getTypeBounds().length >= 1) {
 					this.dependencies
-							.add(new Object[] { DependencyType.DECLARE, node.getReturnType2().resolveBinding().getTypeBounds()[0] });
+							.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(node.getReturnType2()
+									.resolveBinding().getTypeBounds()[0]) });
 				}
 			}
 
