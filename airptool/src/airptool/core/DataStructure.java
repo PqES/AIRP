@@ -23,7 +23,8 @@ public class DataStructure {
 	public DataStructure(IProject project) throws CoreException, ParseException {
 		this.projectClasses = new TreeMap<String, Collection<Object[]>>();
 
-		for (String className : AirpUtil.getClassNames(project)) {
+		Collection<String> classes = AirpUtil.getClassNames(project);
+		for (String className : classes) {
 			this.projectClasses.put(className, null);
 		}
 

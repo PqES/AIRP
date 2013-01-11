@@ -92,21 +92,24 @@ public class SimilarityReportHandler extends AbstractHandler {
 
 				final Map<String, Collection<Object[]>> packagesDependenciesOriginal = AirpUtil.getPackagesDependencies(ds);
 				final Collection<Object[]> universeOfDependenciesOriginal = ds.getUniverseOfDependencies();
-				long inicioGeral = System.currentTimeMillis();
+				// long inicioGeral = System.currentTimeMillis();
 
 				this.calculate(project, javaProject, ds, packagesDependenciesOriginal, universeOfDependenciesOriginal, new TypeFunction(),
 						false, "List_{T}");
-				this.calculate(project, javaProject, ds, packagesDependenciesOriginal, universeOfDependenciesOriginal, new DependencyAndTypeFunction(),
-						false, "List_{dp,T}");
+				System.gc();
+				this.calculate(project, javaProject, ds, packagesDependenciesOriginal, universeOfDependenciesOriginal,
+						new DependencyAndTypeFunction(), false, "List_{dp,T}");
+				System.gc();
 				this.calculate(project, javaProject, ds, packagesDependenciesOriginal, universeOfDependenciesOriginal, new TypeFunction(),
 						true, "Set_{T}");
-				this.calculate(project, javaProject, ds, packagesDependenciesOriginal, universeOfDependenciesOriginal, new DependencyAndTypeFunction(),
-						true, "Set_{dp,T}");
-				
-				System.out.printf("[%s] Total time: %.3f seconds.\n", project.getName(),
-						(System.currentTimeMillis() - inicioGeral) / 1000.0);
-
 				System.gc();
+				this.calculate(project, javaProject, ds, packagesDependenciesOriginal, universeOfDependenciesOriginal,
+						new DependencyAndTypeFunction(), true, "Set_{dp,T}");
+				System.gc();
+
+				// System.out.printf("[%s] Total time: %.3f seconds.\n",
+				// project.getName(),
+				// (System.currentTimeMillis() - inicioGeral) / 1000.0);
 			}
 		} catch (Throwable t) {
 			t.printStackTrace();
@@ -116,83 +119,110 @@ public class SimilarityReportHandler extends AbstractHandler {
 
 	private void calculate(final IProject project, final IJavaProject javaProject, final DataStructure ds,
 			final Map<String, Collection<Object[]>> packagesDependenciesOriginal,
-			final Collection<Object[]> universeOfDependenciesOriginal, final Function<Object[], String> function, final boolean set, final String identifier)
-			throws FileNotFoundException, JavaModelException, CoreException {
+			final Collection<Object[]> universeOfDependenciesOriginal, final Function<Object[], String> function, final boolean set,
+			final String identifier) throws FileNotFoundException, JavaModelException, CoreException {
 		StringBuilder result = new StringBuilder();
-		Collection<String> classes = ds.getProjectClasses();
+		PrintWriter out = null;
+		PrintWriter outLog = null;
+		try {
+			Collection<String> classes = ds.getProjectClasses();
 
-		String filename = "result_" + identifier + "_" + project.getName() + "_" + DateUtil.dateToStr(new Date(), "yyyyMMdd'_'HHmmss")
-				+ ".txt";
+			String filename = "result_" + identifier + "_" + project.getName() + "_" + DateUtil.dateToStr(new Date(), "yyyyMMdd'_'HHmmss")
+					+ ".txt";
 
-		PrintWriter out = new PrintWriter(new FileOutputStream(AirpUtil.TEMP_FOLDER + filename));
+			out = new PrintWriter(new FileOutputStream(AirpUtil.TEMP_FOLDER + filename));
 
-		// Change the universe
-		Collection<? extends Object> universeOfDependencies = Collections2.transform(universeOfDependenciesOriginal, function);
+			String filenameLog = "log_" + identifier + "_" + project.getName() + "_" + DateUtil.dateToStr(new Date(), "yyyyMMdd'_'HHmmss")
+					+ ".txt";
 
-		// Change the packages
-		Map<String, Collection<? extends Object>> packagesDependencies = new HashMap<String, Collection<? extends Object>>();
-		for (String key : packagesDependenciesOriginal.keySet()) {
-			if (set){
-				packagesDependencies.put(key, new HashSet<Object>(Collections2.transform(packagesDependenciesOriginal.get(key), function)));
-			}else{
-				packagesDependencies.put(key, Collections2.transform(packagesDependenciesOriginal.get(key), function));
-			}
-		}
+			outLog = new PrintWriter(new FileOutputStream(AirpUtil.TEMP_FOLDER + filenameLog));
 
-		int i = 0;
-		for (String classUnderAnalysis : classes) {
-			System.out.printf("[%s] %4d of %4d: (%s): ", project.getName(), ++i, classes.size(), classUnderAnalysis);
+			// Change the universe
+			Collection<? extends Object> universeOfDependencies = Collections2.transform(universeOfDependenciesOriginal, function);
 
-			String expectedModule = AirpUtil.getPackageFromClassName(classUnderAnalysis);
-
-			if (AirpUtil.isAloneInItsPackage(javaProject, classUnderAnalysis)) {
-				System.out.println("ignored (lonely).");
-				continue;
+			// Change the packages
+			Map<String, Collection<? extends Object>> packagesDependencies = new HashMap<String, Collection<? extends Object>>();
+			for (String key : packagesDependenciesOriginal.keySet()) {
+				if (set) {
+					packagesDependencies.put(key,
+							new HashSet<Object>(Collections2.transform(packagesDependenciesOriginal.get(key), function)));
+				} else {
+					packagesDependencies.put(key, Collections2.transform(packagesDependenciesOriginal.get(key), function));
+				}
 			}
 
-			if (!AirpUtil.moreThanNDependencies(ds.getDependencies(classUnderAnalysis), 5)) {
-				System.out.println("ignored (uses less than 5 types).");
-				continue;
-			}
+			int i = 0;
+			for (String classUnderAnalysis : classes) {
+				if (i % 100 == 0) {
+					outLog.flush();
+				}
+				outLog.printf("[%s] %4d of %4d: (%s): ", project.getName(), ++i, classes.size(), classUnderAnalysis);
 
-			long inicio = System.currentTimeMillis();
+				String expectedModule = AirpUtil.getPackageFromClassName(classUnderAnalysis);
 
-			Collection<Object[]> dependenciesClassUnderAnalysisOriginal = ds.getDependencies(classUnderAnalysis);
+				/* It may be redundant because the next if statement */
+				if (ds.getDependencies(classUnderAnalysis).isEmpty()) {
+					outLog.println("ignored (there are no dependencies).");
+					continue;
+				}
 
-			// Disregard dependencies of the own class
-			packagesDependenciesOriginal.get(expectedModule).removeAll(dependenciesClassUnderAnalysisOriginal);
-
-			Collection<? extends Object> dependenciesClassUnderAnalysis = Collections2.transform(dependenciesClassUnderAnalysisOriginal,
-					function);
-
-			if (!set) {
-				result.append(SuitableModule.calculateAll(ds, classUnderAnalysis, expectedModule, dependenciesClassUnderAnalysis,
-						packagesDependencies, universeOfDependencies));
-			} else {
-				//It is not linked with the original list (because HashSet)
-				packagesDependencies.put(expectedModule, new HashSet<Object>(Collections2.transform(packagesDependenciesOriginal.get(expectedModule), function)));
+				if (!AirpUtil.moreThanNDependencies(ds.getDependencies(classUnderAnalysis), 5)) {
+					outLog.println("ignored (uses less than 5 types).");
+					continue;
+				}
 				
-				result.append(SuitableModule.calculateAll(ds, classUnderAnalysis, expectedModule, new HashSet<Object>(dependenciesClassUnderAnalysis),
-						packagesDependencies, new HashSet<Object>(universeOfDependencies)));
+				if (AirpUtil.isAloneInItsPackage(javaProject, classUnderAnalysis)) {
+					outLog.println("ignored (lonely).");
+					continue;
+				}
+
+				
+
+				long inicio = System.currentTimeMillis();
+
+				Collection<Object[]> dependenciesClassUnderAnalysisOriginal = ds.getDependencies(classUnderAnalysis);
+
+				// Disregard dependencies of the own class
+				packagesDependenciesOriginal.get(expectedModule).removeAll(dependenciesClassUnderAnalysisOriginal);
+
+				Collection<? extends Object> dependenciesClassUnderAnalysis = Collections2.transform(
+						dependenciesClassUnderAnalysisOriginal, function);
+
+				if (!set) {
+					result.append(SuitableModule.calculateAll(ds, classUnderAnalysis, expectedModule, dependenciesClassUnderAnalysis,
+							packagesDependencies, universeOfDependencies));
+				} else {
+					// It is not linked with the original list (because HashSet)
+					packagesDependencies.put(expectedModule,
+							new HashSet<Object>(Collections2.transform(packagesDependenciesOriginal.get(expectedModule), function)));
+
+					result.append(SuitableModule.calculateAll(ds, classUnderAnalysis, expectedModule, new HashSet<Object>(
+							dependenciesClassUnderAnalysis), packagesDependencies, new HashSet<Object>(universeOfDependencies)));
+				}
+
+				// Put it back after
+				packagesDependenciesOriginal.get(expectedModule).addAll(dependenciesClassUnderAnalysisOriginal);
+
+				if (set) {
+					// Restore what it was
+					packagesDependencies.put(expectedModule,
+							new HashSet<Object>(Collections2.transform(packagesDependenciesOriginal.get(expectedModule), function)));
+				}
+
+				result.append("\n");
+
+				outLog.printf("it took %.3f seconds.\n", (System.currentTimeMillis() - inicio) / 1000.0);
+				out.write(result.toString());
+				result.delete(0, result.length());
 			}
-
-			// Put it back after
-			packagesDependenciesOriginal.get(expectedModule).addAll(dependenciesClassUnderAnalysisOriginal);
-			
-			if (set){
-				//Restore what it was
-				packagesDependencies.put(expectedModule, new HashSet<Object>(Collections2.transform(packagesDependenciesOriginal.get(expectedModule), function)));
+		} finally {
+			if (out != null) {
+				out.close();
 			}
-
-			result.append("\n");
-
-			System.out.printf("it took %.3f seconds.\n", (System.currentTimeMillis() - inicio) / 1000.0);
-
-			out.write(result.toString());
-			result.delete(0, result.length());
+			if (outLog != null) {
+				outLog.close();
+			}
 		}
-
-		out.close();
 	}
 
 	/**

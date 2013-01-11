@@ -161,7 +161,9 @@ public final class AirpUtil {
 				if (resource instanceof IFile && resource.getName().endsWith(".java")) {
 					ICompilationUnit unit = ((ICompilationUnit) JavaCore.create((IFile) resource));
 					final String className = AirpUtil.getClassName(unit);
-					result.add(className);
+					if (unit.isOpen() && className != null){
+						result.add(className);
+					}
 				}
 				return true;
 			}

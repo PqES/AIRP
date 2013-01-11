@@ -7,6 +7,7 @@ import org.eclipse.core.resources.IProjectNature;
 import org.eclipse.core.runtime.CoreException;
 
 import airptool.util.DataStructureUtils;
+import airptool.util.MarkerUtils;
 
 public class AirpNature implements IProjectNature {
 	/**
@@ -48,6 +49,8 @@ public class AirpNature implements IProjectNature {
 				project.setDescription(description, null);
 				
 				DataStructureUtils.cleanDataStructure(this.project);
+				MarkerUtils.deleteMarkers(this.project);
+				MarkerUtils.deleteErrorMarker(this.project);
 				
 				return;
 			}

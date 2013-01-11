@@ -158,6 +158,10 @@ public class AirpBuilder extends IncrementalProjectBuilder {
 
 			final ICompilationUnit unit = ((ICompilationUnit) JavaCore.create((IFile) resource));
 			final String className = AirpUtil.getClassName(unit);
+			
+			if (!unit.isOpen()){
+				return;
+			}
 
 			try {
 				final Collection<Object[]> dependencies;
