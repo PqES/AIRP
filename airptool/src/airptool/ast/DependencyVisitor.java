@@ -21,7 +21,6 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
-import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.PrimitiveType;
@@ -31,7 +30,6 @@ import org.eclipse.jdt.core.dom.SingleMemberAnnotation;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
-import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 
 import airptool.enums.DependencyType;
@@ -128,34 +126,34 @@ public class DependencyVisitor extends ASTVisitor {
 		return true;
 	}
 
-	@SuppressWarnings("unused")
+	
 	@Override
 	public boolean visit(MarkerAnnotation node) {
 		if (node.getParent().getNodeType() == ASTNode.FIELD_DECLARATION) {
-			FieldDeclaration field = (FieldDeclaration) node.getParent();
+			//FieldDeclaration field = (FieldDeclaration) node.getParent();
 			this.dependencies
 					.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName() });
 		} else if (node.getParent().getNodeType() == ASTNode.METHOD_DECLARATION) {
-			MethodDeclaration method = (MethodDeclaration) node.getParent();
+			//MethodDeclaration method = (MethodDeclaration) node.getParent();
 			this.dependencies
 					.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName() });
 		} else if (node.getParent().getNodeType() == ASTNode.TYPE_DECLARATION) {
 			this.dependencies
 					.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName() });
 		} else if (node.getParent().getNodeType() == ASTNode.VARIABLE_DECLARATION_STATEMENT) {
-			VariableDeclarationStatement st = (VariableDeclarationStatement) node.getParent();
-			VariableDeclarationFragment vdf = ((VariableDeclarationFragment) st.fragments().get(0));
+			//VariableDeclarationStatement st = (VariableDeclarationStatement) node.getParent();
+			//VariableDeclarationFragment vdf = ((VariableDeclarationFragment) st.fragments().get(0));
 			ASTNode relevantParent = this.getRelevantParent(node);
 			if (relevantParent.getNodeType() == ASTNode.METHOD_DECLARATION) {
-				MethodDeclaration md = (MethodDeclaration) relevantParent;
+				//MethodDeclaration md = (MethodDeclaration) relevantParent;
 				this.dependencies.add(new Object[] { DependencyType.USEANNOTATION,
 						node.getTypeName().resolveTypeBinding().getQualifiedName() });
 			}
 		} else if (node.getParent().getNodeType() == ASTNode.SINGLE_VARIABLE_DECLARATION) {
-			SingleVariableDeclaration sv = (SingleVariableDeclaration) node.getParent();
+			//SingleVariableDeclaration sv = (SingleVariableDeclaration) node.getParent();
 			ASTNode relevantParent = this.getRelevantParent(node);
 			if (relevantParent.getNodeType() == ASTNode.METHOD_DECLARATION) {
-				MethodDeclaration md = (MethodDeclaration) relevantParent;
+				//MethodDeclaration md = (MethodDeclaration) relevantParent;
 				this.dependencies.add(new Object[] { DependencyType.USEANNOTATION,
 						node.getTypeName().resolveTypeBinding().getQualifiedName() });
 			}
@@ -164,15 +162,15 @@ public class DependencyVisitor extends ASTVisitor {
 		return true;
 	}
 
-	@SuppressWarnings("unused")
+	
 	@Override
 	public boolean visit(SingleMemberAnnotation node) {
 		if (node.getParent().getNodeType() == ASTNode.FIELD_DECLARATION) {
-			FieldDeclaration field = (FieldDeclaration) node.getParent();
+			//FieldDeclaration field = (FieldDeclaration) node.getParent();
 			this.dependencies
 					.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName() });
 		} else if (node.getParent().getNodeType() == ASTNode.METHOD_DECLARATION) {
-			MethodDeclaration method = (MethodDeclaration) node.getParent();
+			//MethodDeclaration method = (MethodDeclaration) node.getParent();
 			this.dependencies
 					.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName() });
 		} else if (node.getParent().getNodeType() == ASTNode.TYPE_DECLARATION) {
@@ -182,18 +180,18 @@ public class DependencyVisitor extends ASTVisitor {
 		return true;
 	}
 
-	@SuppressWarnings("unused")
+	
 	@Override
 	public boolean visit(ClassInstanceCreation node) {
 		ASTNode relevantParent = getRelevantParent(node);
 
 		switch (relevantParent.getNodeType()) {
 		case ASTNode.FIELD_DECLARATION:
-			FieldDeclaration fd = (FieldDeclaration) relevantParent;
+			//FieldDeclaration fd = (FieldDeclaration) relevantParent;
 			this.dependencies.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()) });
 			break;
 		case ASTNode.METHOD_DECLARATION:
-			MethodDeclaration md = (MethodDeclaration) relevantParent;
+			//MethodDeclaration md = (MethodDeclaration) relevantParent;
 			this.dependencies.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()) });
 			break;
 		case ASTNode.INITIALIZER:
@@ -253,15 +251,14 @@ public class DependencyVisitor extends ASTVisitor {
 		return true;
 	}
 
-	@SuppressWarnings("unused")
+	
 	@Override
 	public boolean visit(VariableDeclarationStatement node) {
 		ASTNode relevantParent = getRelevantParent(node);
 
 		switch (relevantParent.getNodeType()) {
 		case ASTNode.METHOD_DECLARATION:
-			MethodDeclaration md = (MethodDeclaration) relevantParent;
-
+			//MethodDeclaration md = (MethodDeclaration) relevantParent;
 			this.dependencies.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(node.getType().resolveBinding()) });
 
 			break;
@@ -287,32 +284,37 @@ public class DependencyVisitor extends ASTVisitor {
 
 		switch (relevantParent.getNodeType()) {
 		case ASTNode.METHOD_DECLARATION:
-			MethodDeclaration md = (MethodDeclaration) relevantParent;
+			//MethodDeclaration md = (MethodDeclaration) relevantParent;
 			if (node.getExpression() != null) {
 				this.dependencies.add(new Object[] { DependencyType.ACCESS,
 						this.getTargetClassName(node.getExpression().resolveTypeBinding()) });
+			}else if (node.resolveMethodBinding() != null){
+				this.dependencies.add(new Object[] { DependencyType.ACCESS,
+						this.getTargetClassName(node.resolveMethodBinding().getDeclaringClass()) });
 			}
 			break;
 		case ASTNode.INITIALIZER:
 			if (node.getExpression() != null) {
 				this.dependencies.add(new Object[] { DependencyType.ACCESS,
 						this.getTargetClassName(node.getExpression().resolveTypeBinding()) });
+			}else if (node.resolveMethodBinding() != null){
+					this.dependencies.add(new Object[] { DependencyType.ACCESS,
+						this.getTargetClassName(node.resolveMethodBinding().getDeclaringClass()) });
 			}
 			break;
 		}
 		return true;
 	}
-
-	@SuppressWarnings("unused")
+		
 	@Override
 	public boolean visit(FieldAccess node) {
 		ASTNode relevantParent = getRelevantParent(node);
 
-		int isStatic = node.resolveFieldBinding().getModifiers() & Modifier.STATIC;
+		//int isStatic = node.resolveFieldBinding().getModifiers() & Modifier.STATIC;
 
 		switch (relevantParent.getNodeType()) {
 		case ASTNode.METHOD_DECLARATION:
-			MethodDeclaration md = (MethodDeclaration) relevantParent;
+			//MethodDeclaration md = (MethodDeclaration) relevantParent;
 			this.dependencies
 					.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()) });
 			break;
@@ -324,18 +326,18 @@ public class DependencyVisitor extends ASTVisitor {
 		return true;
 	}
 
-	@SuppressWarnings("unused")
+	
 	@Override
 	public boolean visit(QualifiedName node) {
 		if ((node.getParent().getNodeType() == ASTNode.METHOD_INVOCATION || node.getParent().getNodeType() == ASTNode.INFIX_EXPRESSION
 				|| node.getParent().getNodeType() == ASTNode.VARIABLE_DECLARATION_FRAGMENT || node.getParent().getNodeType() == ASTNode.ASSIGNMENT)
 				&& node.getQualifier().getNodeType() != ASTNode.QUALIFIED_NAME) {
 			ASTNode relevantParent = getRelevantParent(node);
-			int isStatic = node.resolveBinding().getModifiers() & Modifier.STATIC;
+			//int isStatic = node.resolveBinding().getModifiers() & Modifier.STATIC;
 
 			switch (relevantParent.getNodeType()) {
 			case ASTNode.METHOD_DECLARATION:
-				MethodDeclaration md = (MethodDeclaration) relevantParent;
+				//MethodDeclaration md = (MethodDeclaration) relevantParent;
 				this.dependencies.add(new Object[] { DependencyType.ACCESS,
 						this.getTargetClassName(node.getQualifier().resolveTypeBinding()) });
 				break;
@@ -360,14 +362,14 @@ public class DependencyVisitor extends ASTVisitor {
 		return super.visit(node);
 	}
 
-	@SuppressWarnings("unused")
+	
 	public boolean visit(org.eclipse.jdt.core.dom.NormalAnnotation node) {
 		if (node.getParent().getNodeType() == ASTNode.FIELD_DECLARATION) {
-			FieldDeclaration field = (FieldDeclaration) node.getParent();
+			//FieldDeclaration field = (FieldDeclaration) node.getParent();
 			this.dependencies
 					.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName() });
 		} else if (node.getParent().getNodeType() == ASTNode.METHOD_DECLARATION) {
-			MethodDeclaration method = (MethodDeclaration) node.getParent();
+			//MethodDeclaration method = (MethodDeclaration) node.getParent();
 			this.dependencies
 					.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName() });
 		} else if (node.getParent().getNodeType() == ASTNode.TYPE_DECLARATION) {
@@ -377,7 +379,7 @@ public class DependencyVisitor extends ASTVisitor {
 		return true;
 	};
 
-	@SuppressWarnings("unused")
+	
 	@Override
 	public boolean visit(ParameterizedType node) {
 		ASTNode relevantParent = this.getRelevantParent(node);
@@ -387,7 +389,7 @@ public class DependencyVisitor extends ASTVisitor {
 				for (Object o : pt.typeArguments()) {
 					Type t = (Type) o;
 					if (relevantParent.getNodeType() == ASTNode.METHOD_DECLARATION) {
-						MethodDeclaration md = (MethodDeclaration) relevantParent;
+						//MethodDeclaration md = (MethodDeclaration) relevantParent;
 						this.dependencies.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(t.resolveBinding()) });
 					} else {
 						this.dependencies.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(t.resolveBinding()) });
