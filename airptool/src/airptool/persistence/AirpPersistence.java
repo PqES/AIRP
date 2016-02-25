@@ -6,6 +6,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Collection;
@@ -54,7 +55,8 @@ public final class AirpPersistence {
 		if (storeFile.exists()) {
 			ObjectInputStream in = null;
 			try {
-				in = new ObjectInputStream(storeFile.getContents());
+				InputStream in2 = storeFile.getContents();
+				in = new ObjectInputStream(in2);
 				return (Collection<Object[]>) in.readObject();
 			} finally {
 				if (in != null) {

@@ -30,13 +30,16 @@ import org.eclipse.jdt.core.JavaModelException;
 import airptool.builder.AirpBuilder;
 import airptool.core.DataStructure;
 
+//TODO: MUITOS metodos comentados no Util. Verificar se deve mudar isso
+
 public final class AirpUtil {
 	public static final String NOME_APLICACAO = ".: Airp Tool :.";
 	public static final String DATA_FOLDER = "airpdata";
 
 	// TODO: To be parameterized
-	public static final String TEMP_FOLDER = "/NoBackup/AirpReports/";
+	public static final String TEMP_FOLDER = "/airptool_test/NoBackup/AirpReports/";
 
+	// TODO: Construtor private e vazio. Ver se deve mudar
 	private AirpUtil() {
 	}
 

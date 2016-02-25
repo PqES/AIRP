@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Airptool
+Bundle-Name: %Bundle-Name
 Bundle-SymbolicName: airptool; singleton:=true
 Bundle-Version: 1.0.2.qualifier
 Bundle-Activator: airptool.Activator
@@ -14,3 +14,38 @@ Bundle-ClassPath: .,
  commons-collections-3.2.1.jar,
  guava-14.0-rc1.jar
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: airptool,
+ airptool.ast,
+ airptool.builder,
+ airptool.core,
+ airptool.core.coefficients,
+ airptool.enums,
+ airptool.handlers,
+ airptool.persistence,
+ airptool.tests,
+ airptool.util,
+ com.google.common.annotations,
+ com.google.common.base,
+ com.google.common.base.internal;x-internal:=true,
+ com.google.common.cache,
+ com.google.common.collect,
+ com.google.common.eventbus,
+ com.google.common.hash,
+ com.google.common.io,
+ com.google.common.math,
+ com.google.common.net,
+ com.google.common.primitives,
+ com.google.common.reflect,
+ com.google.common.util.concurrent,
+ org.apache.commons.collections,
+ org.apache.commons.collections.bag,
+ org.apache.commons.collections.bidimap,
+ org.apache.commons.collections.buffer,
+ org.apache.commons.collections.collection,
+ org.apache.commons.collections.comparators,
+ org.apache.commons.collections.functors,
+ org.apache.commons.collections.iterators,
+ org.apache.commons.collections.keyvalue,
+ org.apache.commons.collections.list,
+ org.apache.commons.collections.map,
+ org.apache.commons.collections.set

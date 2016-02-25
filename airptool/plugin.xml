@@ -26,7 +26,7 @@
       </builder>
    </extension>
       <extension point="org.eclipse.ui.ide.projectNatureImages">
-      <image icon="icons/sim.png" id="airptool.nature.img" natureId="airptool.nature" />
+      <image icon="icons/sim.png" id="airptool.nature.img" natureId="airptool.airpNature" />
    </extension>
    
    <extension

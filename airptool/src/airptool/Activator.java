@@ -62,6 +62,6 @@ public class Activator extends AbstractUIPlugin implements IStartup {
 	
 	@Override
 	public void earlyStartup() {
-		
+	//TODO: implementar algo que ele vai fazer quando o eclipse for aberto (ou nada)	
 	}
 }

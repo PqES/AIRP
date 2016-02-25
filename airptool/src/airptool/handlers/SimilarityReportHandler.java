@@ -49,6 +49,8 @@ public class SimilarityReportHandler extends AbstractHandler {
 	 * The constructor.
 	 */
 	public SimilarityReportHandler() {
+		//TODO: verificar se precisa colocar algo no construtor (provavelmente sim),
+		//mas na documentacao do site ta vazia
 	}
 
 	/**
@@ -65,11 +67,18 @@ public class SimilarityReportHandler extends AbstractHandler {
 			dialog.setMultipleSelection(true);
 			dialog.setEmptySelectionMessage("No project select. Airp has not been triggered.");
 
+			//TODO: ver prq essas 2 linhas estão comentadas em baixo) 
+			
 			// dialog.setElements(new String[] { "[T]", "[dt, T]" });
 			dialog.setTitle(AirpUtil.NOME_APLICACAO);
 			dialog.setMessage("Which projects would you like to analyze? (it has to be opened and Airp enabled)");
 			// dialog.setInitialSelections(new String[] { "[T]" });
 
+			//TODO: acho que aqui ele ta pegando todos os projetos que etao abertos
+			//ver se nao eh melhor mudar pro cara escolher
+			//tem que ver se o fato disso ser um Handler, o que está fazendo está
+			//certo e eu deveria mexer em outro lugar
+			
 			LinkedList<IProject> airpEnabledProjects = new LinkedList<IProject>();
 			for (IProject project : root.getProjects()) {
 				if (project.isOpen() && AirpUtil.isAirpEnabled(project)) {
@@ -93,6 +102,9 @@ public class SimilarityReportHandler extends AbstractHandler {
 				final Map<String, Collection<Object[]>> packagesDependenciesOriginal = AirpUtil.getPackagesDependencies(ds);
 				final Collection<Object[]> universeOfDependenciesOriginal = ds.getUniverseOfDependencies();
 				// long inicioGeral = System.currentTimeMillis();
+				
+				//TODO: ver prq a linha acima está comentada)
+				//parece que ele tava usando soh pra calcular o tempo que demora pra processar
 
 				this.calculate(project, javaProject, ds, packagesDependenciesOriginal, universeOfDependenciesOriginal, new TypeFunction(),
 						false, "List_{T}");
@@ -106,6 +118,8 @@ public class SimilarityReportHandler extends AbstractHandler {
 				this.calculate(project, javaProject, ds, packagesDependenciesOriginal, universeOfDependenciesOriginal,
 						new DependencyAndTypeFunction(), true, "Set_{dp,T}");
 				System.gc();
+				
+				//TODO: era soh pra calcular o tempo mesmo
 
 				// System.out.printf("[%s] Total time: %.3f seconds.\n",
 				// project.getName(),

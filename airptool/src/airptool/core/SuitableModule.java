@@ -31,19 +31,21 @@ import airptool.core.coefficients.YuleCoefficientStrategy;
 import airptool.util.FormatUtil;
 
 public class SuitableModule {
-	private static final ICoefficientStrategy[] coefficientStrategies = { new JaccardCoefficientStrategy(), new SMCCoefficientStrategy(),
+	/*private static final ICoefficientStrategy[] coefficientStrategies = { new JaccardCoefficientStrategy(), new SMCCoefficientStrategy(),
 			new YuleCoefficientStrategy(), new HamannCoefficientStrategy(), new SorensonCoefficientStrategy(),
 			new RogersTanimotoCoefficientStrategy(), new SokalSneathCoefficientStrategy(), new RussellRaoCoefficientStrategy(),
 			new BaroniUrbaniCoefficientStrategy(), new SokalBinaryDistanceCoefficientStrategy(), new OchiaiCoefficientStrategy(),
 			new PhiBinaryDistance(), new PSCCoefficientStrategy(), new DotProductCoefficientStrategy(),
 			new KulczynskiCoefficientStrategy(), new SokalSneath2CoefficientStrategy(), new SokalSneath4CoefficientStrategy(),
-			new RelativeMatchingCoefficientStrategy() };
+			new RelativeMatchingCoefficientStrategy() };*/
+	
+	private static final ICoefficientStrategy[] coefficientStrategies = { new JaccardCoefficientStrategy()};
 
 	public static StringBuilder calculateAll(final DataStructure ds, final String classUnderAnalysis, final String expectedModule,
 			final Collection<? extends Object> dependenciesClassUnderAnalysis, final Map<String, Collection<? extends Object>> packagesDependencies,
 			final Collection<? extends Object> universeOfDependencies) {
 		StringBuilder resume = new StringBuilder();
-		resume.append(classUnderAnalysis + "\t");
+		resume.append("Class Under Analysis: "+classUnderAnalysis+ "\t");
 
 		Map<Class<? extends ICoefficientStrategy>, Set<Object[]>> suitableModulesByCoefficient = calculate(ds, classUnderAnalysis,
 				coefficientStrategies, dependenciesClassUnderAnalysis, packagesDependencies, universeOfDependencies);

@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeHierarchy;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -39,21 +41,67 @@ public class DependencyVisitor extends ASTVisitor {
 
 	private ICompilationUnit unit;
 	private CompilationUnit fullClass;
+	private CompilationUnit fullMethod;
 	private String className;
 
-	public DependencyVisitor(ICompilationUnit unit) {
+	public DependencyVisitor(ICompilationUnit unit) throws JavaModelException {
 		this.dependencies = new ArrayList<Object[]>();
 		this.unit = unit;
-
+	
 		this.className = unit.getParent().getElementName() + "." + unit.getElementName().substring(0, unit.getElementName().length() - 5);
 		ASTParser parser = ASTParser.newParser(AST.JLS4); // It was JSL3, but it
 															// is now deprecated
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
 		parser.setSource(unit);
 		parser.setResolveBindings(true);
+		parser.setBindingsRecovery(true);
 
-		this.fullClass = (CompilationUnit) parser.createAST(null); // parse
+		this.fullClass = (CompilationUnit) parser.createAST(null);// parse
 		this.fullClass.accept(this);
+		
+		IType[] allTypes = unit.getAllTypes();
+		for(IType type : allTypes){
+			IMethod[] allMethods = type.getMethods();
+			for(IMethod method : allMethods){
+				final ICompilationUnit methodUnit = method.getCompilationUnit();
+				IType it = null;
+				try{
+					IType[] types = methodUnit.getAllTypes();
+					IType[] types2 = methodUnit.getTypes();
+					
+						for(IType t : types){
+							IMethod[] methods = t.getMethods();
+							int v=1;
+						}
+				} catch (JavaModelException e){
+					e.printStackTrace();
+				}
+			}
+				
+				/*
+				this.className = method.getElementName();
+				int methodStart = method.getSourceRange().getOffset();
+				int methodLen = method.getSourceRange().getLength();
+				String temp3 = methodUnit.getSource().substring(methodStart, (methodStart+methodLen));
+				
+				ASTParser parser = ASTParser.newParser(AST.JLS4); // It was JSL3, but it
+				// is now deprecated
+				parser.setKind(ASTParser.K_COMPILATION_UNIT);
+				//parser.setSource(methodUnit.getSource().substring(methodStart, (methodStart+methodLen)).toCharArray());
+				//parser.setFocalPosition(methodStart);
+				//parser.setSourceRange(methodStart, methodLen);
+				parser.setCompilerOptions(JavaCore.getOptions());
+				parser.setProject(unit.getJavaProject());
+				parser.setUnitName(this.className);
+				parser.setResolveBindings(true);
+				parser.setBindingsRecovery(true);
+				
+
+				this.fullMethod = (CompilationUnit) parser.createAST(null);
+				this.fullMethod.accept(this);
+		*/		
+		}
+		
 	}
 
 	public final List<Object[]> getDependencies() {
@@ -69,7 +117,7 @@ public class DependencyVisitor extends ASTVisitor {
 		if (!node.isLocalTypeDeclaration() && !node.isMemberTypeDeclaration()) { // Para
 																					// evitar
 																					// fazer
-																					// v‡rias
+																					// vï¿½rias
 																					// vezes
 			try {
 				IType type = (IType) unit.getTypes()[0];
@@ -247,7 +295,7 @@ public class DependencyVisitor extends ASTVisitor {
 				}
 			}
 
-		}
+		}		
 		return true;
 	}
 
@@ -272,7 +320,7 @@ public class DependencyVisitor extends ASTVisitor {
 	@Override
 	public boolean visit(MethodInvocation node) {
 		ASTNode relevantParent = getRelevantParent(node);
-
+		
 		// int isStatic;
 		//
 		// if (node.resolveMethodBinding() != null){

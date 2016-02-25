@@ -23,6 +23,8 @@ public class MarkerUtils {
 		return marker;
 	}
 
+	//TODO: metodo abaixo comentado. Ver se deve mudar
+	
 //	public static IMarker addErrorMarker(IFile file, String message, int lineNumber) throws CoreException {
 //		IMarker marker = file.createMarker(MARKER_ERROR_TYPE);
 //		marker.setAttribute(IMarker.LINE_NUMBER, lineNumber);
