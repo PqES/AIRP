@@ -2,8 +2,13 @@ package airptool.builder;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -70,11 +75,42 @@ public class AirpBuilder extends IncrementalProjectBuilder {
 
 		for (String className : ds.getProjectClasses()) {
 			monitor.subTask(className);
-			Collection<Object[]> dependencies = AirpPersistence.load(this.getProject(), className);
-			if (dependencies == null) {
+			Collection<Object[]> dependenciesCP = AirpPersistence.load(this.getProject(), className+"CP");
+			Collection<Object[]> dependenciesMC = AirpPersistence.load(this.getProject(), className+"MC");
+			Collection<Object[]> dependenciesBM = AirpPersistence.load(this.getProject(), className+"BM");
+			
+			if (dependenciesCP == null || dependenciesMC == null || dependenciesBM == null) {
 				throw new CoreException(null);
 			}
-			ds.updateDependencies(className, dependencies);
+			ds.updateDependenciesCP(className, dependenciesCP);
+			ds.updateDependenciesMC(className, dependenciesMC);
+			ds.updateDependenciesBM(className, dependenciesBM);
+			
+			/*for(Object[] objMC: dependenciesMC){
+				String methodName = objMC[3].toString();
+				Collection<Object[]> depMC = new LinkedList<Object[]>();;
+				
+				for(Object[] objMC2: dependenciesMC){
+					if(methodName.equals(objMC2[3].toString())){
+						depMC.add(objMC2);
+					}
+				}
+				ds.updateDependenciesMC(className, methodName , depMC);
+			}
+			
+			
+			for(Object[] objBM: dependenciesBM){
+				String methodName = objBM[3].toString();
+				int bloco = Integer.parseInt(objBM[4].toString());
+				Collection<Object[]> depBM = new LinkedList<Object[]>();
+				
+				for(Object[] objBM2: dependenciesBM){
+					if(methodName.equals(objBM2[3].toString()) && bloco == Integer.parseInt(objBM2[4].toString())){
+						depBM.add(objBM2);
+					}
+				}
+				ds.updateDependenciesBM(className, methodName ,bloco, depBM);
+				}*/
 			monitor.worked(1);
 		}
 	}
@@ -164,13 +200,85 @@ public class AirpBuilder extends IncrementalProjectBuilder {
 			}
 
 			try {
-				final Collection<Object[]> dependencies;
+				final Collection<Object[]> dependenciesCP;
+				final Collection<Object[]> dependenciesMC;
+				final Collection<Object[]> dependenciesBM;
+				
+				final LinkedList<List<Object[]>> dependenciesMC2;
+				final LinkedList<List<Object[]>> dependenciesBM2;
 				if (reextractDependencies) {
-					dependencies = AirpUtil.getDependenciesUsingAST(unit);
-					ds.updateDependencies(className, dependencies);
-					AirpPersistence.persist(this.getProject(), className, dependencies);
+					dependenciesCP = AirpUtil.getDependenciesCPUsingAST(unit);
+					dependenciesMC = AirpUtil.getDependenciesMCUsingAST(unit);
+					dependenciesBM = AirpUtil.getDependenciesBMUsingAST(unit);
+					
+					//dependenciesMC2 = AirpUtil.getDependenciesMC2UsingAST(unit);
+					//dependenciesBM2 = AirpUtil.getDependenciesBM2UsingAST(unit);
+					
+					ds.updateDependenciesCP(className, dependenciesCP);
+					ds.updateDependenciesMC(className, dependenciesMC);
+					ds.updateDependenciesBM(className, dependenciesBM);
+					
+					/*int i=0;
+					int j=0;
+					for(List<Object[]> listDepMC: dependenciesMC2){
+						i++;
+						String methodName = listDepMC.get(i)[3].toString();
+						
+						Collection<Object[]> depMC = new LinkedList<Object[]>();
+						for(List<Object[]> listDepMC2: dependenciesMC2){
+							j++;
+							if(methodName.equals(listDepMC.get(j)[3].toString()));
+								depMC.add(listDepMC2.get(j));
+						}
+						
+						ds.updateDependenciesMC(className, methodName, depMC);
+					}
+					
+					int k=0;
+					int l=0;
+					for(List<Object[]> listDepBM: dependenciesBM2){
+						k++;
+						String methodName = listDepBM.get(k)[3].toString();
+						int bloco = Integer.parseInt(listDepBM.get(k)[4].toString());
+						
+						Collection<Object[]> depBM = new LinkedList<Object[]>();
+						for(List<Object[]> listDepBM2: dependenciesMC2){
+							l++;
+							if(methodName.equals(listDepBM.get(l)[3].toString()) && bloco == Integer.parseInt(listDepBM.get(j)[4].toString()));
+								depBM.add(listDepBM2.get(l));
+						}
+						
+						ds.updateDependenciesBM(className, methodName, bloco, depBM);
+					}*/
+					
+					AirpPersistence.persist(this.getProject(), className+"CP", dependenciesCP);
+					AirpPersistence.persist(this.getProject(), className+"MC", dependenciesMC);
+					AirpPersistence.persist(this.getProject(), className+"BM", dependenciesBM);
 				} else {
-					dependencies = ds.getDependencies(className);
+					dependenciesCP = ds.getDependenciesCP(className);
+					
+					HashMap<String, Collection<Object[]>> tempMC = ds.getDependenciesMC(className);
+					Collection<Object[]> tempO1 = new ArrayList<Object[]>();
+					
+					for(Map.Entry<String, Collection<Object[]>> entry : tempMC.entrySet()){
+						tempO1.addAll(entry.getValue());
+					}
+
+					dependenciesMC = tempO1;
+					
+					HashMap<String,HashMap<Integer, Collection<Object[]>>> tempBM = ds.getDependenciesBM(className);
+					Collection<Object[]> tempO2 = new ArrayList<Object[]>();
+					
+					for(Map.Entry<String,HashMap<Integer, Collection<Object[]>>> entry : tempBM.entrySet()){
+						for(Map.Entry<Integer, Collection<Object[]>> entry2 : entry.getValue().entrySet()){
+							tempO2.addAll(entry2.getValue());
+						}
+					}
+
+					dependenciesBM = tempO2;
+					
+					//dependenciesMC = ds.getDependenciesMC(className);
+					//dependenciesBM = ds.getDependenciesBM(className);
 				}
 			} catch (IOException e) {
 				MarkerUtils.addErrorMarker(this.getProject(), "There was a problem in extracting dependencies from " + className);

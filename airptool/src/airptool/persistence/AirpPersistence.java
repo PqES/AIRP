@@ -21,7 +21,7 @@ public final class AirpPersistence {
 	private AirpPersistence() {
 	}
 
-	public static void persist(final IProject project, final String className, final Collection<Object[]> dependencies)
+	public static void persist(final IProject project, final String className, final Collection<Object[]> dependencies )
 			throws CoreException, IOException {
 		IFolder folder = project.getFolder(DATA_FOLDER);
 		if (!folder.exists()) {

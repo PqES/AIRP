@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,6 +23,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
@@ -37,7 +39,7 @@ public final class AirpUtil {
 	public static final String DATA_FOLDER = "airpdata";
 
 	// TODO: To be parameterized
-	public static final String TEMP_FOLDER = "/airptool_test/NoBackup/AirpReports/";
+	public static final String TEMP_FOLDER = "/Users/arthurfp/Desktop/REPORTS/";
 
 	// TODO: Construtor private e vazio. Ver se deve mudar
 	private AirpUtil() {
@@ -166,6 +168,28 @@ public final class AirpUtil {
 					final String className = AirpUtil.getClassName(unit);
 					if (unit.isOpen() && className != null){
 						result.add(className);
+					}
+				}
+				return true;
+			}
+		});
+
+		//Collections.sort((List<String>) result);
+		//Collections.reverse((List<String>) result);
+
+		return result;
+	}
+	
+	public static Collection<String> getMethodNames(final IProject project, final String className) throws CoreException {
+		final Collection<String> result = new LinkedList<String>();
+		project.accept(new IResourceVisitor() {
+
+			@Override
+			public boolean visit(IResource resource) {
+				if (resource instanceof IMethod) {
+					final String methodName = resource.getName();
+					if (className.equals(((IMethod)resource).getClassFile().getElementName()) && methodName != null){
+						result.add(methodName);
 					}
 				}
 				return true;
@@ -327,7 +351,7 @@ public final class AirpUtil {
 	// // // writer.println("Estabilished Dependencies: " + numDepEst);
 	// // // writer.println("Violated Dependencies: " +
 	// // // architecturalDrifts.size());
-	// // // writer.println("Architectural Conformação: "
+	// // // writer.println("Architectural Conformaï¿½ï¿½o: "
 	// // // + (numDepEst - architecturalDrifts.size()) / numDepEst);
 	// //
 	// // if (architecturalDrifts != null && !architecturalDrifts.isEmpty()) {
@@ -460,12 +484,52 @@ public final class AirpUtil {
 	// }
 	//
 
-	public static Collection<Object[]> getDependenciesUsingAST(ICompilationUnit unit) throws CoreException, IOException {
+	public static Collection<Object[]> getDependenciesCPUsingAST(ICompilationUnit unit) throws CoreException, IOException {
 		final Collection<Object[]> dependencies = new LinkedList<Object[]>();
 
 		airptool.ast.DependencyVisitor cv = new airptool.ast.DependencyVisitor(unit);
 
-		dependencies.addAll(cv.getDependencies());
+		dependencies.addAll(cv.getDependenciesCP());
+		return dependencies;
+	}
+	
+	public static Collection<Object[]> getDependenciesMCUsingAST(ICompilationUnit unit) throws CoreException, IOException {
+		final Collection<Object[]> dependencies = new LinkedList<Object[]>();
+
+		airptool.ast.DependencyVisitor cv = new airptool.ast.DependencyVisitor(unit);
+
+		dependencies.addAll(cv.getDependenciesMC());
+		return dependencies;
+	}
+	
+	public static Collection<Object[]> getDependenciesBMUsingAST(ICompilationUnit unit) throws CoreException, IOException {
+		final Collection<Object[]> dependencies = new LinkedList<Object[]>();
+
+		airptool.ast.DependencyVisitor cv = new airptool.ast.DependencyVisitor(unit);
+
+		dependencies.addAll(cv.getDependenciesBM());
+		return dependencies;
+	}
+	
+	public static LinkedList<List<Object[]>> getDependenciesMC2UsingAST(ICompilationUnit unit) throws CoreException, IOException {
+		final LinkedList<List<Object[]>> dependencies = new LinkedList<List<Object[]>>();
+
+		airptool.ast.DependencyVisitor cv = new airptool.ast.DependencyVisitor(unit);
+
+		dependencies.add(cv.getDependenciesMC());
+		
+		//dependencies.addAll(cv.getDependenciesMC());
+		return dependencies;
+	}
+	
+	public static LinkedList<List<Object[]>> getDependenciesBM2UsingAST(ICompilationUnit unit) throws CoreException, IOException {
+		final LinkedList<List<Object[]>> dependencies = new LinkedList<List<Object[]>>();
+
+		airptool.ast.DependencyVisitor cv = new airptool.ast.DependencyVisitor(unit);
+
+		dependencies.add(cv.getDependenciesBM());
+		
+		//dependencies.addAll(cv.getDependenciesMC());
 		return dependencies;
 	}
 
@@ -596,6 +660,28 @@ public final class AirpUtil {
 		}
 		return true;
 	}
+	
+	public static boolean isAloneInItsClass(Map<String, ArrayList<String>> methods, String className) throws JavaModelException, CoreException {
+
+		for (Map.Entry<String, ArrayList<String>> entry : methods.entrySet()){
+				if(entry.getKey().equals(className)){
+					if(entry.getValue().size()>1) return false;
+				} 
+		}
+		return true;
+	}
+	
+	public static boolean isAloneInItsMethod(Map<String, Map<String, ArrayList<Integer>>> blocos, String methodName, String className) throws JavaModelException, CoreException {
+		for (Map.Entry<String, Map<String, ArrayList<Integer>>> entry : blocos.entrySet()){
+			String className2=entry.getKey();
+			for (Map.Entry<String, ArrayList<Integer>> entry2 : entry.getValue().entrySet()){
+				if(entry2.getKey().equals(methodName) && className2.equals(className)){
+					if(entry2.getValue().size()>1) return false;
+				}
+			}
+		}
+		return true;
+	}
 
 	public static boolean moreThanNDependencies(Collection<Object[]> dependencies, int referenceSize) {
 		Set<String> s = new HashSet<String>();
@@ -605,6 +691,13 @@ public final class AirpUtil {
 				s.clear();
 				return true;
 			}
+		}
+		return false;
+	}
+	
+	public static boolean moreThanNDependenciesBM(Collection<Object[]> dependencies, int referenceSize) {
+		if (dependencies.size() >= referenceSize) {
+			return true;
 		}
 		return false;
 	}
@@ -619,17 +712,34 @@ public final class AirpUtil {
 		return packages;
 	}
 
-	public static Map<String, Collection<Object[]>> getPackagesDependencies(DataStructure ds) {
-		final Map<String, Collection<Object[]>> packagesDependencies = new HashMap<String, Collection<Object[]>>();
+	public static Map<String, HashMap<String, Collection<Object[]>>> getPackagesDependencies(DataStructure ds) {
+		final Map<String, HashMap<String, Collection<Object[]>>> packagesDependencies = new HashMap<String, HashMap<String, Collection<Object[]>>>();
 
 		for (String className : ds.getProjectClasses()) {
 			final String packageName = getPackageFromClassName(className);
-			if (!packagesDependencies.containsKey(packageName)) {
-				packagesDependencies.put(packageName, new ArrayList<Object[]>());
+			if(!packageName.contains("test")){
+				if (!packagesDependencies.containsKey(packageName)) {
+					packagesDependencies.put(packageName, new HashMap<String, Collection<Object[]>>());
+				}
+				packagesDependencies.get(packageName).put(className, ds.getDependenciesCP(className));
+				//addAll(ds.getDependenciesCP(className));
+		
 			}
-			packagesDependencies.get(packageName).addAll(ds.getDependencies(className));
 		}
 
 		return packagesDependencies;
+	}
+	
+	public static ArrayList<String> getClassImplements(String className, DataStructure ds) {
+		ArrayList<String> classesImplemented = new ArrayList<String>();
+		
+		Collection<Object[]> dependencies = ds.getDependenciesCP(className);
+		
+		for(Object[] obj : dependencies){
+			if(obj[0].equals("IMPLEMENT")){
+				classesImplemented.add(obj[1].toString());
+			}
+		}
+		return classesImplemented;
 	}
 }

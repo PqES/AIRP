@@ -1,8 +1,10 @@
 package airptool.enums;
 
 public enum DependencyType {
-	ACCESS("access"), USEANNOTATION("useannotation"), CREATE("create"), DECLARE("declare"), DERIVE("derive"), EXTEND("extend"), HANDLE(
-			"handle"), IMPLEMENT("implement"), THROW("throw"), DEPEND("depend");
+	ACCESS("access"), USEANNOTATION("useannotation"), CREATE("create"), DECLARE("declare"), 
+	DECLARE_ATTRIBUTE("declare an attribute"), DECLARE_FORMAL_PARAMETER("declare a formal parameter"), 
+	DERIVE("derive"), EXTEND("extend"), HANDLE("handle"), IMPLEMENT("implement"), THROW("throw"), 
+	DEPEND("depend");
 
 	private final String value;
 
