@@ -4,12 +4,16 @@ public class CsvDataBM {
 
 	private long id;
 	private long id2;
-	private int bloco;
+	private String bloco;
 	private String metodo;
-	private int blocoDoMetodo;
+	private String metodoAlvo;
+	private String blocoDoMetodo;
 	private String classe;
-	private String pacote;
-	private int a, b ,c, d;
+	private String classeAlvo;
+	private String pacoteAlvo;
+	private String depUnder;
+	private String depAlvo;
+	private int linha, a, b ,c, d;
 	private String tipo;
 	/**
 	 * @param id
@@ -24,7 +28,7 @@ public class CsvDataBM {
 	 * @param d
 	 * @param tipo
 	 */
-	public CsvDataBM(long id, long id2, int bloco, String metodo, String classe, String pacote, int blocoDoMetodo, int a,
+	public CsvDataBM(long id, long id2, String bloco, String metodo, String classe, String depUnder, String blocoDoMetodo, String metodoAlvo, String classeAlvo, String pacoteAlvo, String depAlvo, int linha, int a,
 			int b, int c, int d, String tipo) {
 		super();
 		this.id = id;
@@ -33,7 +37,12 @@ public class CsvDataBM {
 		this.blocoDoMetodo = blocoDoMetodo;
 		this.metodo = metodo;
 		this.classe = classe;
-		this.pacote = pacote;
+		this.metodoAlvo = metodoAlvo;
+		this.classeAlvo = classeAlvo;
+		this.pacoteAlvo = pacoteAlvo;
+		this.depUnder = depUnder;
+		this.depAlvo = depAlvo;
+		this.linha = linha;
 		this.a = a;
 		this.b = b;
 		this.c = c;
@@ -67,13 +76,13 @@ public class CsvDataBM {
 	/**
 	 * @return the bloco
 	 */
-	public int getBloco() {
+	public String getBloco() {
 		return bloco;
 	}
 	/**
 	 * @param bloco the bloco to set
 	 */
-	public void setBloco(int bloco) {
+	public void setBloco(String bloco) {
 		this.bloco = bloco;
 	}
 	/**
@@ -100,26 +109,61 @@ public class CsvDataBM {
 	public void setClasse(String classe) {
 		this.classe = classe;
 	}
+	
+	public String getMetodoAlvo() {
+		return metodoAlvo;
+	}
+	/**
+	 * @param metodo the metodo to set
+	 */
+	public void setMetodoAlvo(String metodoAlvo) {
+		this.metodoAlvo = metodoAlvo;
+	}
+	/**
+	 * @return the classe
+	 */
+	public String getClasseAlvo() {
+		return classeAlvo;
+	}
+	/**
+	 * @param classe the classe to set
+	 */
+	public void setClasseAlvo(String classeAlvo) {
+		this.classeAlvo = classeAlvo;
+	}
+	
 	/**
 	 * @return the pacote
 	 */
-	public String getPacote() {
-		return pacote;
+	public String getPacoteAlvo() {
+		return pacoteAlvo;
 	}
 	/**
 	 * @param pacote the pacote to set
 	 */
-	public void setLastName(String pacote) {
-		this.pacote = pacote;
+	public void setPacoteAlvo(String pacoteAlvo) {
+		this.pacoteAlvo = pacoteAlvo;
 	}
-	public int getBlocoDoMetodo() {
+	public String getBlocoDoMetodo() {
 		return blocoDoMetodo;
 	}
 	/**
 	 * @param bloco the bloco to set
 	 */
-	public void setBlocoDoMetodo(int blocoDoMetodo) {
+	public void setBlocoDoMetodo(String blocoDoMetodo) {
 		this.blocoDoMetodo = blocoDoMetodo;
+	}
+	/**
+	 * @return the linha
+	 */
+	public int getLinha() {
+		return linha;
+	}
+	/**
+	 * @param linha the linha to set
+	 */
+	public void setLinha(int linha) {
+		this.linha = linha;
 	}
 	/**
 	 * @return the a
@@ -182,10 +226,32 @@ public class CsvDataBM {
 		this.tipo = tipo;
 	}
 	
+	public String getDepUnder() {
+		return depUnder;
+	}
+	/**
+	 * @param metodo the metodo to set
+	 */
+	public void setDepUnder(String depUnder) {
+		this.depUnder = depUnder;
+	}
+	/**
+	 * @return the classe
+	 */
+	public String getDepAlvo() {
+		return depAlvo;
+	}
+	/**
+	 * @param classe the classe to set
+	 */
+	public void setDepAlvo(String depAlvo) {
+		this.depAlvo = depAlvo;
+	}
+	
 	@Override
 	public String toString() {
 		return "Data [id=" + id + ", bloco=" + bloco + ", metodo=" + metodo + ", classe=" + classe
-				+ ", pacote=" + pacote + ", a=" + a + ", b="
+				+ ", pacoteAlvo=" + pacoteAlvo + ", a=" + a + ", b="
 				+ b + ", c=" + c + ", d=" + d + ", type=" + tipo +"]";
 	}
 }

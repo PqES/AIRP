@@ -1,6 +1,7 @@
 package airptool.ast;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -15,6 +16,7 @@ import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnnotationTypeMemberDeclaration;
+import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.DoStatement;
@@ -50,13 +52,17 @@ public class DependencyVisitor extends ASTVisitor {
 	private CompilationUnit fullClass;
 	private CompilationUnit fullMethod;
 	private String className;
-	private boolean MC;
-	private int count2;
+	private boolean MC, methodInterFirstBlock, interno;
+	private int count2, count3;
 	private int bloco;
+	private ArrayList<Integer> linelist;
 	private ArrayList<Integer> blist;
-	private int count;
+	private ArrayList<String> blocosExternos;
+	private ArrayList<String> metodoExterno;
+	private int count, nextvalue, lineMethod, lineBlock;
 	private String methodName;
 	private String classMethodName;
+	private String blockIndex;
 
 	public DependencyVisitor(ICompilationUnit unit) throws JavaModelException {
 		this.dependenciesCP = new ArrayList<Object[]>();
@@ -64,12 +70,23 @@ public class DependencyVisitor extends ASTVisitor {
 		this.dependenciesBM = new ArrayList<Object[]>();
 		this.unit = unit;
 		this.MC = false;
+		this.interno = false;
 		this.count2=0;
+		this.count3=0;
+		this.methodInterFirstBlock=false;
 		this.bloco=0;
 		this.blist= new ArrayList<Integer>();
-		this.count=0;
+		this.linelist= new ArrayList<Integer>();
+		this.count=1;
+		this.lineMethod = 0;
+		this.lineBlock = 0;
+		this.nextvalue = 1;
 		this.methodName = "";
 		this.classMethodName = "";
+		this.blockIndex = "";
+		this.blocosExternos = new ArrayList<String>();
+		this.metodoExterno = new ArrayList<String>();
+		
 	
 		this.className = unit.getParent().getElementName() + "." + unit.getElementName().substring(0, unit.getElementName().length() - 5);
 		ASTParser parser = ASTParser.newParser(AST.JLS4); // It was JSL3, but it
@@ -159,11 +176,26 @@ public class DependencyVisitor extends ASTVisitor {
 				for (IType t : typeSuperclasses) {
 					if (node.getSuperclassType() != null
 							&& t.getFullyQualifiedName().equals(node.getSuperclassType().resolveBinding().getQualifiedName())) {
-						if(MC) this.dependenciesMC.add(new Object[] { DependencyType.EXTEND, t.getFullyQualifiedName(), methodName, getClassName()});
+						if(MC) this.dependenciesMC.add(new Object[] { DependencyType.EXTEND, t.getFullyQualifiedName(), methodName, getClassName(), lineMethod});
 						
 						if(MC && bloco>0){ 
+							String metName=methodName;
 							for(int i=0; i<blist.size(); i++){
-								this.dependenciesBM.add(new Object[] { DependencyType.EXTEND, t.getFullyQualifiedName(), methodName, blist.get(i), getClassName()});
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+									this.dependenciesBM.add(new Object[] { DependencyType.EXTEND, t.getFullyQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+								}else{
+									this.dependenciesBM.add(new Object[] { DependencyType.EXTEND, t.getFullyQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+								}
 							}
 						}
 						this.dependenciesCP.add(new Object[] { DependencyType.EXTEND, t.getFullyQualifiedName()});
@@ -182,21 +214,51 @@ public class DependencyVisitor extends ASTVisitor {
 							SimpleType st = (SimpleType) it;
 							if (t.getFullyQualifiedName().equals(st.getName().resolveTypeBinding().getQualifiedName())) {
 								if (!type.isInterface()) {
-									if(MC) this.dependenciesMC.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName(), methodName, getClassName()});
+									if(MC) this.dependenciesMC.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName(), methodName, getClassName(), lineMethod});
 									
 									if(MC && bloco>0){ 
-										for(int i=0; i<blist.size(); i++){
-											this.dependenciesBM.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName(), methodName, blist.get(i), getClassName()});
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+											this.dependenciesBM.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+										} else {
+											this.dependenciesBM.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+											}
 										}
 									}
 									
 									this.dependenciesCP.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName() });
 								} else {
-									if(MC) this.dependenciesMC.add(new Object[] { DependencyType.EXTEND, t.getFullyQualifiedName(), methodName, getClassName()});
+									if(MC) this.dependenciesMC.add(new Object[] { DependencyType.EXTEND, t.getFullyQualifiedName(), methodName, getClassName(), lineMethod});
 									
 									if(MC && bloco>0){ 
-										for(int i=0; i<blist.size(); i++){
-											this.dependenciesBM.add(new Object[] { DependencyType.EXTEND, t.getFullyQualifiedName(), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+											this.dependenciesBM.add(new Object[] { DependencyType.EXTEND, t.getFullyQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+										}else{
+											this.dependenciesBM.add(new Object[] { DependencyType.EXTEND, t.getFullyQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+										}
 										}
 									}
 									
@@ -209,21 +271,51 @@ public class DependencyVisitor extends ASTVisitor {
 							ParameterizedType pt = (ParameterizedType) it;
 							if (t.getFullyQualifiedName().equals(pt.getType().resolveBinding().getBinaryName())) {
 								if (!type.isInterface()) {
-									if(MC) this.dependenciesMC.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName(), methodName, getClassName()});
+									if(MC) this.dependenciesMC.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName(), methodName, getClassName(), lineMethod});
 									
 									if(MC && bloco>0){ 
-										for(int i=0; i<blist.size(); i++){
-											this.dependenciesBM.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName(), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+											this.dependenciesBM.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+										} else{
+											this.dependenciesBM.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+											}
 										}
 									}
 									
 									this.dependenciesCP.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName() });
 								} else {
-									if(MC) this.dependenciesMC.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName(), methodName, getClassName()});
+									if(MC) this.dependenciesMC.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName(), methodName, getClassName(), lineMethod});
 									
 									if(MC && bloco>0){ 
-										for(int i=0; i<blist.size(); i++){
-											 this.dependenciesBM.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName(), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+											 this.dependenciesBM.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+										}else {
+											this.dependenciesBM.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+											}
 										}
 									}
 									this.dependenciesCP.add(new Object[] { DependencyType.IMPLEMENT, t.getFullyQualifiedName() });
@@ -247,11 +339,26 @@ public class DependencyVisitor extends ASTVisitor {
 	public boolean visit(MarkerAnnotation node) {
 		if (node.getParent().getNodeType() == ASTNode.FIELD_DECLARATION) {
 			// FieldDeclaration field = (FieldDeclaration) node.getParent();
-			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName()});
+			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName(), lineMethod});
 			
 			if(MC && bloco>0){ 
-				for(int i=0; i<blist.size(); i++){
-					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+				}else{
+					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}
 				}
 			}
 			
@@ -259,22 +366,52 @@ public class DependencyVisitor extends ASTVisitor {
 		
 		} else if (node.getParent().getNodeType() == ASTNode.METHOD_DECLARATION) {
 			// MethodDeclaration method = (MethodDeclaration) node.getParent();
-			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName()});
+			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName(), lineMethod});
 
 			if(MC && bloco>0){ 
-					for(int i=0; i<blist.size(); i++){
-						this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+						this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}else{
+						this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+						}
 					}
 			}
 
 			this.dependenciesCP.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName() });
 		
 		} else if (node.getParent().getNodeType() == ASTNode.TYPE_DECLARATION) {
-			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName()});
+			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName(), lineMethod});
 
 			if(MC && bloco>0){ 
-				for(int i=0; i<blist.size(); i++){
-					 this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+					 this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+				}else{
+					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}
 				}
 			}
 			
@@ -288,11 +425,26 @@ public class DependencyVisitor extends ASTVisitor {
 			ASTNode relevantParent = this.getRelevantParent(node);
 			if (relevantParent.getNodeType() == ASTNode.METHOD_DECLARATION) {
 				// MethodDeclaration md = (MethodDeclaration) relevantParent;
-				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName()});
+				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName(), lineMethod});
 				
 				if(MC && bloco>0){ 
-					for(int i=0; i<blist.size(); i++){
-						this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+									this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}else{
+						this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+						}
 					}
 				}
 				
@@ -304,11 +456,26 @@ public class DependencyVisitor extends ASTVisitor {
 			ASTNode relevantParent = this.getRelevantParent(node);
 			if (relevantParent.getNodeType() == ASTNode.METHOD_DECLARATION) {
 				// MethodDeclaration md = (MethodDeclaration) relevantParent;
-				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName()});
+				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName(), lineMethod});
 				
 				if(MC && bloco>0){ 
-					for(int i=0; i<blist.size(); i++){
-						this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+						this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}else{
+						this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+						}
 					}
 				}
 				
@@ -323,11 +490,26 @@ public class DependencyVisitor extends ASTVisitor {
 	public boolean visit(SingleMemberAnnotation node) {
 		if (node.getParent().getNodeType() == ASTNode.FIELD_DECLARATION) {
 			// FieldDeclaration field = (FieldDeclaration) node.getParent();
-			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName()});
+			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName(), lineMethod});
 			
 			if(MC && bloco>0){ 
-				for(int i=0; i<blist.size(); i++){
-					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+				}else{
+					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}
 				}
 			}
 			
@@ -338,18 +520,48 @@ public class DependencyVisitor extends ASTVisitor {
 			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, });
 			
 			if(MC && bloco>0){ 
-				for(int i=0; i<blist.size(); i++){
-					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+				}else{
+					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}
 				}
 			}
 			this.dependenciesCP.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName() });
 		
 		} else if (node.getParent().getNodeType() == ASTNode.TYPE_DECLARATION) {
-			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName()});
+			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName(), lineMethod});
 			
 			if(MC && bloco>0){ 
-				for(int i=0; i<blist.size(); i++){
-					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+				}else{
+					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}
 				}
 			}
 			
@@ -365,11 +577,26 @@ public class DependencyVisitor extends ASTVisitor {
 		switch (relevantParent.getNodeType()) {
 		case ASTNode.FIELD_DECLARATION:
 			// FieldDeclaration fd = (FieldDeclaration) relevantParent;
-			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()), methodName, getClassName()});
+			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()), methodName, getClassName(), lineMethod});
 			
 			if(MC && bloco>0){ 
-				for(int i=0; i<blist.size(); i++){
-					this.dependenciesBM.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+					this.dependenciesBM.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+				}else{
+					this.dependenciesBM.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}
 				}
 			}
 			
@@ -377,22 +604,52 @@ public class DependencyVisitor extends ASTVisitor {
 			break;
 		case ASTNode.METHOD_DECLARATION:
 			// MethodDeclaration md = (MethodDeclaration) relevantParent;
-			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()), methodName, getClassName()});
+			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()), methodName, getClassName(), lineMethod});
 			
 			if(MC && bloco>0){ 
-				for(int i=0; i<blist.size(); i++){
-					this.dependenciesBM.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+					this.dependenciesBM.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+				}else{
+					this.dependenciesBM.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}
 				}
 			}
 			
 			this.dependenciesCP.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()) });
 			break;
 		case ASTNode.INITIALIZER:
-			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()), methodName, getClassName()});
+			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()), methodName, getClassName(), lineMethod});
 			
 			if(MC && bloco>0){ 
-				for(int i=0; i<blist.size(); i++){
-					this.dependenciesBM.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+					this.dependenciesBM.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+				}else{
+					this.dependenciesBM.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}
 				}
 			}
 			this.dependenciesCP.add(new Object[] { DependencyType.CREATE, this.getTargetClassName(node.getType().resolveBinding()) });
@@ -405,11 +662,26 @@ public class DependencyVisitor extends ASTVisitor {
 	@Override
 	public boolean visit(FieldDeclaration node) {
 		Type a = node.getType();
-		if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE_ATTRIBUTE, this.getTargetClassName(node.getType().resolveBinding()), methodName, getClassName()});
+		if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE_ATTRIBUTE, this.getTargetClassName(node.getType().resolveBinding()), methodName, getClassName(), lineMethod});
 		
 		if(MC && bloco>0){ 
-			for(int i=0; i<blist.size(); i++){
-				this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_ATTRIBUTE, this.getTargetClassName(node.getType().resolveBinding()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+				this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_ATTRIBUTE, this.getTargetClassName(node.getType().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+			}else{
+				this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_ATTRIBUTE, this.getTargetClassName(node.getType().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+				}
 			}
 		}
 		
@@ -419,19 +691,40 @@ public class DependencyVisitor extends ASTVisitor {
 
 	@Override
 	public boolean visit(MethodDeclaration node) {
-		
+		if(!blockIndex.equals("")){
+			methodInterFirstBlock=true;
+			interno=true;
+			blocosExternos.add(blockIndex);
+			metodoExterno.add(methodName);
+		}
 		MC=true;
 		methodName=node.getName().getFullyQualifiedName();
+		lineMethod=fullClass.getLineNumber(node.getStartPosition()) - 1;
 		
 		for (Object o : node.parameters()) {
 			if (o instanceof SingleVariableDeclaration) {
 				SingleVariableDeclaration svd = (SingleVariableDeclaration) o;
 				Type b = svd.getType();
-				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE_FORMAL_PARAMETER, this.getTargetClassName(svd.getType().resolveBinding()), methodName, getClassName()});
+				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE_FORMAL_PARAMETER, this.getTargetClassName(svd.getType().resolveBinding()), methodName, getClassName(), lineMethod});
 				
 				if(MC && bloco>0){ 
-					for(int i=0; i<blist.size(); i++){
-						this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_FORMAL_PARAMETER, this.getTargetClassName(svd.getType().resolveBinding()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+						this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_FORMAL_PARAMETER, this.getTargetClassName(svd.getType().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}else{
+						this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_FORMAL_PARAMETER, this.getTargetClassName(svd.getType().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+						}
 					}
 				}
 				
@@ -441,22 +734,52 @@ public class DependencyVisitor extends ASTVisitor {
 					for (Object t : ((ParameterizedType) svd.getType()).typeArguments()) {
 						if (t instanceof SimpleType) {
 							SimpleType st = (SimpleType) t;
-							if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE_FORMAL_PARAMETER, this.getTargetClassName(st.resolveBinding()), methodName, getClassName()});
+							if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE_FORMAL_PARAMETER, this.getTargetClassName(st.resolveBinding()), methodName, getClassName(), lineMethod});
 							
 							if(MC && bloco>0){ 
-								for(int i=0; i<blist.size(); i++){
-									this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_FORMAL_PARAMETER, this.getTargetClassName(st.resolveBinding()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+									this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_FORMAL_PARAMETER, this.getTargetClassName(st.resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+								}else{
+									this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_FORMAL_PARAMETER, this.getTargetClassName(st.resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+									}
 								}
 							}
 							
 							this.dependenciesCP.add(new Object[] { DependencyType.DECLARE_FORMAL_PARAMETER, this.getTargetClassName(st.resolveBinding()) });
 						} else if (t instanceof ParameterizedType) {
 							ParameterizedType pt = (ParameterizedType) t;
-							if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE_FORMAL_PARAMETER, this.getTargetClassName(pt.getType().resolveBinding()), methodName, getClassName()});
+							if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE_FORMAL_PARAMETER, this.getTargetClassName(pt.getType().resolveBinding()), methodName, getClassName(), lineMethod});
 							
 							if(MC && bloco>0){ 
-								for(int i=0; i<blist.size(); i++){
-									this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_FORMAL_PARAMETER, this.getTargetClassName(pt.getType().resolveBinding()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+									this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_FORMAL_PARAMETER, this.getTargetClassName(pt.getType().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+								}else{
+									this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_FORMAL_PARAMETER, this.getTargetClassName(pt.getType().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+									}
 								}
 							}
 							
@@ -469,11 +792,26 @@ public class DependencyVisitor extends ASTVisitor {
 		}
 		for (Object o : node.thrownExceptions()) {
 			Name name = (Name) o;
-			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.THROW, this.getTargetClassName(name.resolveTypeBinding()), methodName, getClassName()});
+			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.THROW, this.getTargetClassName(name.resolveTypeBinding()), methodName, getClassName(), lineMethod});
 			
 			if(MC && bloco>0){ 
-				for(int i=0; i<blist.size(); i++){
-					this.dependenciesBM.add(new Object[] { DependencyType.THROW, this.getTargetClassName(name.resolveTypeBinding()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+					this.dependenciesBM.add(new Object[] { DependencyType.THROW, this.getTargetClassName(name.resolveTypeBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+				}else{
+					this.dependenciesBM.add(new Object[] { DependencyType.THROW, this.getTargetClassName(name.resolveTypeBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}
 				}
 			}
 			
@@ -484,22 +822,52 @@ public class DependencyVisitor extends ASTVisitor {
 				&& !(node.getReturnType2().isPrimitiveType() && ((PrimitiveType) node.getReturnType2()).getPrimitiveTypeCode() == PrimitiveType.VOID)) {
 			if (!node.getReturnType2().resolveBinding().isTypeVariable()) {
 				ASTNode b = node.getParent();
-				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(node.getReturnType2().resolveBinding()), methodName, getClassName()});
+				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(node.getReturnType2().resolveBinding()), methodName, getClassName(), lineMethod});
 				
 				if(MC && bloco>0){ 
-					for(int i=0; i<blist.size(); i++){
-						this.dependenciesBM.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(node.getReturnType2().resolveBinding()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+						this.dependenciesBM.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(node.getReturnType2().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}else{
+						this.dependenciesBM.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(node.getReturnType2().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+						}
 					}
 				}
 				
 				this.dependenciesCP.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(node.getReturnType2().resolveBinding()) });
 			} else {
 				if (node.getReturnType2().resolveBinding().getTypeBounds().length >= 1) {
-					if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(node.getReturnType2().resolveBinding().getTypeBounds()[0]), methodName, getClassName()});
+					if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(node.getReturnType2().resolveBinding().getTypeBounds()[0]), methodName, getClassName(), lineMethod});
 					
 					if(MC && bloco>0){ 
-						for(int i=0; i<blist.size(); i++){
-							this.dependenciesBM.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(node.getReturnType2().resolveBinding().getTypeBounds()[0]), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+							this.dependenciesBM.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(node.getReturnType2().resolveBinding().getTypeBounds()[0]), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+						}else{
+							this.dependenciesBM.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(node.getReturnType2().resolveBinding().getTypeBounds()[0]), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+							}
 						}
 					}
 					
@@ -517,19 +885,53 @@ public class DependencyVisitor extends ASTVisitor {
 	
 	@Override
 	public void endVisit(MethodDeclaration node) {
-		MC=false;
+		if(!blockIndex.equals("")){
+			
+			ASTNode parent = node.getParent();
+			
+			while (parent.getNodeType()!=ASTNode.METHOD_DECLARATION && parent.getParent()!=null){
+				parent = parent.getParent();
+			}
+			
+			if(parent.getNodeType()==ASTNode.METHOD_DECLARATION){
+				interno=false;
+				blocosExternos.remove(blocosExternos.size()-1);
+				metodoExterno.remove(metodoExterno.size()-1);
+				
+				MethodDeclaration md = (MethodDeclaration)parent;
+				methodName=md.getName().getFullyQualifiedName();
+				lineMethod=fullClass.getLineNumber(md.getStartPosition()) - 1;
+			}
+		}
+		else{	
+			MC=false;
+		}
 	}
 	
 	@Override
 	public boolean visit(Block node) {
 		count2++;
-		if(MC && count2>1){
+		if(MC && count2>1 && !methodInterFirstBlock){
 			bloco++;
-			count++;
-			blist.add(count);
+			count3++;
+			
+			if(blockIndex.equals("")) blockIndex = blockIndex+nextvalue;
+			else{
+				blockIndex = blockIndex+"-"+nextvalue;
+			}
+			
+			nextvalue=1;
+			
+			lineBlock = fullClass.getLineNumber(node.getStartPosition()) - 1;
+			linelist.add(lineBlock);
+			blist.add(nextvalue);
 			
 			//node.getParent().accept(this);
 			
+		}
+		if(methodInterFirstBlock) {
+			methodInterFirstBlock=false;
+			count3=0;
 		}
 		return true;
 	}
@@ -537,9 +939,27 @@ public class DependencyVisitor extends ASTVisitor {
 	@Override
 	public void endVisit(Block node) {
 		count2--;
-		if(MC && count2>0){
+		if(MC && count2>0 && count3>0){
+			if(linelist.size()>1) lineBlock = linelist.get(bloco-2);
+			else lineBlock =0;
+			
+			linelist.remove(bloco-1);
+			blist.remove(bloco-1);
+			
+			if(blockIndex.length()==1){
+				nextvalue= Integer.parseInt(blockIndex)+1;
+				blockIndex = "";
+			}
+			else {
+				nextvalue= Integer.parseInt(blockIndex.substring(blockIndex.length() - 1))+1;
+				blockIndex = blockIndex.substring(0, blockIndex.length()-2);
+			}
+			
 			bloco--;
-			blist.remove(bloco);
+			count3--;
+		}
+		else if(count3<=0){
+			count3=count2;
 		}
 	}
 	
@@ -551,11 +971,26 @@ public class DependencyVisitor extends ASTVisitor {
 		switch (relevantParent.getNodeType()) {
 		case ASTNode.METHOD_DECLARATION:
 			// MethodDeclaration md = (MethodDeclaration) relevantParent;
-			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE_ATTRIBUTE, this.getTargetClassName(node.getType().resolveBinding()), methodName, getClassName()});
+			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE_ATTRIBUTE, this.getTargetClassName(node.getType().resolveBinding()), methodName, getClassName(), lineMethod});
 			
 			if(MC && bloco>0){ 
-				for(int i = 0; i<blist.size(); i++){
-					this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_ATTRIBUTE, this.getTargetClassName(node.getType().resolveBinding()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+					this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_ATTRIBUTE, this.getTargetClassName(node.getType().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+				}else{
+					this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_ATTRIBUTE, this.getTargetClassName(node.getType().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}
 				}
 			}
 			
@@ -563,11 +998,26 @@ public class DependencyVisitor extends ASTVisitor {
 
 			break;
 		case ASTNode.INITIALIZER:
-			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE_ATTRIBUTE, this.getTargetClassName(node.getType().resolveBinding()), methodName, getClassName()});
+			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE_ATTRIBUTE, this.getTargetClassName(node.getType().resolveBinding()), methodName, getClassName(), lineMethod});
 			
 			if(MC && bloco>0){ 
-				for(int i=0; i<blist.size(); i++){
-					this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_ATTRIBUTE, this.getTargetClassName(node.getType().resolveBinding()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+					this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_ATTRIBUTE, this.getTargetClassName(node.getType().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)).substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+				}else{
+					this.dependenciesBM.add(new Object[] { DependencyType.DECLARE_ATTRIBUTE, this.getTargetClassName(node.getType().resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)).substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}
 				}
 			}
 			this.dependenciesCP.add(new Object[] { DependencyType.DECLARE_ATTRIBUTE, this.getTargetClassName(node.getType().resolveBinding()) });
@@ -594,21 +1044,51 @@ public class DependencyVisitor extends ASTVisitor {
 		case ASTNode.METHOD_DECLARATION:
 			// MethodDeclaration md = (MethodDeclaration) relevantParent;
 			if (node.getExpression() != null) {
-				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), methodName, getClassName()});
+				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), methodName, getClassName(), lineMethod});
 				
 				if(MC && bloco>0){ 
-					for(int i=0; i<blist.size(); i++){
-						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}else{
+						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+						}
 					}
 				}
 				
 				this.dependenciesCP.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()) });
 			} else if (node.resolveMethodBinding() != null) {
-				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.resolveMethodBinding().getDeclaringClass()), methodName, getClassName()});
+				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.resolveMethodBinding().getDeclaringClass()), methodName, getClassName(), lineMethod});
 				
 				if(MC && bloco>0){ 
-					for(int i=0; i<blist.size(); i++){
-						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.resolveMethodBinding().getDeclaringClass()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.resolveMethodBinding().getDeclaringClass()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}else{
+						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.resolveMethodBinding().getDeclaringClass()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+						}
 					}
 				}
 				
@@ -617,21 +1097,51 @@ public class DependencyVisitor extends ASTVisitor {
 			break;
 		case ASTNode.INITIALIZER:
 			if (node.getExpression() != null) {
-				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), methodName, getClassName()});
+				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), methodName, getClassName(), lineMethod});
 				
 				if(MC && bloco>0){ 
-					for(int i=0; i<blist.size(); i++){
-						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}else{
+						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+						}
 					}
 				}
 				
 				this.dependenciesCP.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()) });
 			} else if (node.resolveMethodBinding() != null) {
-				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.resolveMethodBinding().getDeclaringClass()), methodName, getClassName()});
+				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.resolveMethodBinding().getDeclaringClass()), methodName, getClassName(), lineMethod});
 				
 				if(MC && bloco>0){ 
-					for(int i=0; i<blist.size(); i++){
-						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.resolveMethodBinding().getDeclaringClass()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.resolveMethodBinding().getDeclaringClass()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}else{
+						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.resolveMethodBinding().getDeclaringClass()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+						}
 					}
 				}
 				
@@ -652,22 +1162,52 @@ public class DependencyVisitor extends ASTVisitor {
 		switch (relevantParent.getNodeType()) {
 		case ASTNode.METHOD_DECLARATION:
 			// MethodDeclaration md = (MethodDeclaration) relevantParent;
-			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), methodName, getClassName()});
+			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), methodName, getClassName(), lineMethod});
 			
 			if(MC && bloco>0){ 
-				for(int i=0; i<blist.size(); i++){
-					this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+					this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+				}else{
+					this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}
 				}
 			}
 			
 			this.dependenciesCP.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()) });
 			break;
 		case ASTNode.INITIALIZER:
-			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), methodName, getClassName()});
+			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), methodName, getClassName(), lineMethod});
 			
 			if(MC && bloco>0){ 
-				for(int i=0; i<blist.size(); i++){
-					this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+					this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+				}else{
+					this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getExpression().resolveTypeBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});}
+								
 				}
 			}
 			
@@ -689,22 +1229,52 @@ public class DependencyVisitor extends ASTVisitor {
 			switch (relevantParent.getNodeType()) {
 			case ASTNode.METHOD_DECLARATION:
 				// MethodDeclaration md = (MethodDeclaration) relevantParent;
-				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getQualifier().resolveTypeBinding()), methodName, getClassName()});
+				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getQualifier().resolveTypeBinding()), methodName, getClassName(), lineMethod});
 				
 				if(MC && bloco>0){ 
-					for(int i=0; i<blist.size(); i++){
-						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getQualifier().resolveTypeBinding()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getQualifier().resolveTypeBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}else{
+						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getQualifier().resolveTypeBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+						}
 					}
 				}
 				
 				this.dependenciesCP.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getQualifier().resolveTypeBinding()) });
 				break;
 			case ASTNode.INITIALIZER:
-				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getQualifier().resolveTypeBinding()), methodName, getClassName()});
+				if(MC) this.dependenciesMC.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getQualifier().resolveTypeBinding()), methodName, getClassName(), lineMethod});
 				
 				if(MC && bloco>0){ 
-					for(int i=0; i<blist.size(); i++){
-						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getQualifier().resolveTypeBinding()), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getQualifier().resolveTypeBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}else{
+						this.dependenciesBM.add(new Object[] { DependencyType.ACCESS, this.getTargetClassName(node.getQualifier().resolveTypeBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+						}
 					}
 				}
 				
@@ -713,6 +1283,8 @@ public class DependencyVisitor extends ASTVisitor {
 			}
 
 		}
+		
+		
 
 		return true;
 	}
@@ -730,34 +1302,81 @@ public class DependencyVisitor extends ASTVisitor {
 	public boolean visit(org.eclipse.jdt.core.dom.NormalAnnotation node) {
 		if (node.getParent().getNodeType() == ASTNode.FIELD_DECLARATION) {
 			// FieldDeclaration field = (FieldDeclaration) node.getParent();
-			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName()});
+			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName(), lineMethod});
 			
 			if(MC && bloco>0){ 
-				for(int i=0; i<blist.size(); i++){
-					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+				}else{
+					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+					}
 				}
 			}
 			
 			this.dependenciesCP.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName() });
 		} else if (node.getParent().getNodeType() == ASTNode.METHOD_DECLARATION) {
 			// MethodDeclaration method = (MethodDeclaration) node.getParent();
-			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName()});
+			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName(), lineMethod});
 			
 			if(MC && bloco>0){ 
-				for(int i=0; i<blist.size(); i++){
-					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+				}else{
+					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+				}
 				}
 			}
 			
 			this.dependenciesCP.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName() });
 		} else if (node.getParent().getNodeType() == ASTNode.TYPE_DECLARATION) {
-			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName()});
+			if(MC) this.dependenciesMC.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, getClassName(), lineMethod});
 			
 			if(MC && bloco>0){ 
-				for(int i=0; i<blist.size(); i++){
-					this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), methodName, blist.get(i), getClassName() });
+							String metName=methodName;
+							for(int i=0; i<blist.size(); i++){
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+									this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+								} else{
+									this.dependenciesBM.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName(), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+								}
 				}
 			}
+			
+			
 			
 			this.dependenciesCP.add(new Object[] { DependencyType.USEANNOTATION, node.getTypeName().resolveTypeBinding().getQualifiedName() });
 		}
@@ -776,20 +1395,54 @@ public class DependencyVisitor extends ASTVisitor {
 						// MethodDeclaration md = (MethodDeclaration)
 						// relevantParent;
 						//TODO: esse if else nao serve pra nada
-						if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(t.resolveBinding()), methodName, getClassName()});
+						if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(t.resolveBinding()), methodName, getClassName(), lineMethod});
 						
 						if(MC && bloco>0){ 
+							String metName=methodName;
 							for(int i=0; i<blist.size(); i++){
-								this.dependenciesBM.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(t.resolveBinding()), methodName, blist.get(i), getClassName() });
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+									this.dependenciesBM.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(t.resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+								}else{
+									this.dependenciesBM.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(t.resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+								}
+								
+								
 							}
 						}
 						this.dependenciesCP.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(t.resolveBinding()) });
 					} else {
-						if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(t.resolveBinding()), methodName, getClassName()});
+						if(MC) this.dependenciesMC.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(t.resolveBinding()), methodName, getClassName(), lineMethod});
 						
 						if(MC && bloco>0){ 
+							String metName=methodName;
 							for(int i=0; i<blist.size(); i++){
-								this.dependenciesBM.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(t.resolveBinding()), methodName, blist.get(i), getClassName() });
+								
+								if(interno){
+									if(blocosExternos.contains(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+										int pos =-1;
+										for(int j=0; j<blocosExternos.size(); j++){
+											if(blocosExternos.get(j).equals(blockIndex.substring(0, blockIndex.length()-(i*2)))){
+												pos = j;
+											}
+										}
+										metName=metodoExterno.get(pos);
+									}
+									this.dependenciesBM.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(t.resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+								}else{
+									this.dependenciesBM.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(t.resolveBinding()), metName, blockIndex.substring(0, blockIndex.length()-(i*2)), getClassName(), lineBlock});
+								}
+								
+								
 							}
 						}
 						this.dependenciesCP.add(new Object[] { DependencyType.DECLARE, this.getTargetClassName(t.resolveBinding()) });

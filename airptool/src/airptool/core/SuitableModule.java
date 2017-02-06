@@ -100,13 +100,13 @@ public class SuitableModule {
 		return resume;
 	}
 	
-	public static StringBuilder calculateAllBM(final DataStructure ds, String expectedClass, final int blockUnderAnalysis, final String expectedMethod,
-			final Collection<? extends Object> dependenciesBlockUnderAnalysis, final Map<String, HashMap<String, HashMap<Integer, Collection<? extends Object>>>> methodDependencies,
-			final Collection<? extends Object> universeOfDependencies) {
+	public static StringBuilder calculateAllBM(final DataStructure ds, String expectedClass, final String blockUnderAnalysis, final String expectedMethod,
+			final Collection<? extends Object> dependenciesBlockUnderAnalysis, final Map<String, HashMap<String, HashMap<String, Collection<? extends Object>>>> methodDependencies,
+			final Collection<? extends Object> universeOfDependencies, int lineUnderAnalysis) {
 		StringBuilder resume = new StringBuilder();
 		
 		String suitableModulesByCoefficient = calculateBM(ds, expectedClass, expectedMethod, blockUnderAnalysis,
-				coefficientStrategies, dependenciesBlockUnderAnalysis, methodDependencies, universeOfDependencies);
+				coefficientStrategies, dependenciesBlockUnderAnalysis, methodDependencies, universeOfDependencies, lineUnderAnalysis);
 		
 		resume.append(suitableModulesByCoefficient+System.getProperty("line.separator"));
 		
@@ -115,11 +115,11 @@ public class SuitableModule {
 	
 	public static StringBuilder calculateAllMC(final DataStructure ds, String methodUnderAnalysis, final String expectedClass,
 			final Collection<? extends Object> dependenciesMethodUnderAnalysis, final Map<String, HashMap<String, Collection<? extends Object>>> classDependencies,
-			final Collection<? extends Object> universeOfDependencies) {
+			final Collection<? extends Object> universeOfDependencies, int lineUnderAnalysis) {
 		StringBuilder resume = new StringBuilder();
 		
 		String suitableModulesByCoefficient = calculateMC(ds, expectedClass, methodUnderAnalysis,
-				coefficientStrategies, dependenciesMethodUnderAnalysis, classDependencies, universeOfDependencies);
+				coefficientStrategies, dependenciesMethodUnderAnalysis, classDependencies, universeOfDependencies, lineUnderAnalysis);
 		
 		resume.append(suitableModulesByCoefficient+System.getProperty("line.separator"));
 		
@@ -192,7 +192,7 @@ public class SuitableModule {
 					tipo="Min";
 				}
 				
-				csvdatas.add(new CsvData(i, j, classUnderAnalysis, respectiveModuleName, respectiveClassName, a, b, c, d, tipo));
+				csvdatas.add(new CsvData(i, j, classUnderAnalysis, dependenciesClassUnderAnalysis.toString(), respectiveClassName, respectiveModuleName, dependenciesPackageUnderAnalysis.toString(), a, b, c, d, tipo));
 				
 				j++;
 			}
@@ -205,7 +205,7 @@ public class SuitableModule {
 	private static String calculateMC(final DataStructure ds, String expectedClass,
 			final String methodUnderAnalysis, final ICoefficientStrategy[] coefficientStrategies,
 			final Collection<? extends Object> dependenciesMethodUnderAnalysis, final Map<String, HashMap<String, Collection<? extends Object>>> classDependencies,
-			final Collection<? extends Object> universeOfDependencies) {
+			final Collection<? extends Object> universeOfDependencies, int lineUnderAnalysis) {
 
 		String tipo = "";
 		List<CsvDataMC> csvdatasMC = new ArrayList<CsvDataMC>();
@@ -230,14 +230,10 @@ public class SuitableModule {
 		}
 		
 		int i=1;
-		
-		ArrayList<String> classesImplements = airptool.util.AirpUtil.getClassImplements(expectedClass, ds);
 
 		for (Map.Entry<String, HashMap<String, Collection<? extends Object>>> entry : classDependencies.entrySet()) {
 			String respectiveClassName = entry.getKey();
-			if(classesImplements.contains(respectiveClassName)){
-				continue;
-			}
+			
 			int j=1;
 			for (String respectiveMethodName : entry.getValue().keySet()) {
 				/*
@@ -274,7 +270,7 @@ public class SuitableModule {
 					tipo="Min";
 				}
 				
-				csvdatasMC.add(new CsvDataMC(i,j, methodUnderAnalysis, respectiveClassName, respectiveModuleName, respectiveMethodName, a, b, c, d, tipo));
+				csvdatasMC.add(new CsvDataMC(i,j, methodUnderAnalysis, expectedClass, dependenciesMethodUnderAnalysis.toString(), respectiveMethodName, respectiveClassName, respectiveModuleName, dependenciesClassUnderAnalysis.toString(), lineUnderAnalysis, a, b, c, d, tipo));
 				
 				j++;
 			}
@@ -285,9 +281,9 @@ public class SuitableModule {
 	}
 	
 	private static String calculateBM(final DataStructure ds, String expectedClass, String expectedMethod,
-			final int blockUnderAnalysis, final ICoefficientStrategy[] coefficientStrategies,
-			final Collection<? extends Object> dependenciesBlockUnderAnalysis, final Map<String, HashMap<String, HashMap<Integer, Collection<? extends Object>>>> methodDependencies,
-			final Collection<? extends Object> universeOfDependencies) {
+			final String blockUnderAnalysis, final ICoefficientStrategy[] coefficientStrategies,
+			final Collection<? extends Object> dependenciesBlockUnderAnalysis, final Map<String, HashMap<String, HashMap<String, Collection<? extends Object>>>> methodDependencies,
+			final Collection<? extends Object> universeOfDependencies, int lineUnderAnalysis) {
 
 		String tipo = "";
 		List<CsvDataBM> csvdatasBM = new ArrayList<CsvDataBM>();
@@ -311,21 +307,26 @@ public class SuitableModule {
 			return null;
 		}
 		
-		int i=1;
+		long i=1;
+		boolean count=false;
 		
-		ArrayList<String> classesImplements = airptool.util.AirpUtil.getClassImplements(expectedClass, ds);
-
-		for (Map.Entry<String, HashMap<String, HashMap<Integer, Collection<? extends Object>>>> entry : methodDependencies.entrySet()) {
+		
+		for (Map.Entry<String, HashMap<String, HashMap<String, Collection<? extends Object>>>> entry : methodDependencies.entrySet()) {
 			String respectiveClassName = entry.getKey();
 			
-			if(classesImplements.contains(respectiveClassName)){
-				continue;
-			}
-			for(Map.Entry<String, HashMap<Integer, Collection<? extends Object>>> entry2 : entry.getValue().entrySet()) {
-				int j=1;
-				for(Integer blockNumber : entry2.getValue().keySet()){
-					
+			for(Map.Entry<String, HashMap<String, Collection<? extends Object>>> entry2 : entry.getValue().entrySet()) {
+				long j=1;
+				count=false;
+				
+				for(String blockNumber : entry2.getValue().keySet()){
 					String respectiveMethodName = entry2.getKey();
+					
+					
+					if(blockNumber.startsWith(blockUnderAnalysis) && respectiveMethodName.equals(expectedMethod)){
+						continue;
+					}
+					count=true;
+					
 					/*
 					 * If dependencyType is null, the function above will consider all
 					 * dependencies
@@ -361,13 +362,15 @@ public class SuitableModule {
 					else{
 						tipo="Min";
 					}
+					dependenciesBlockUnderAnalysis.toString();
 					
-					csvdatasBM.add(new CsvDataBM(i, j, blockUnderAnalysis, respectiveMethodName, respectiveClassName, respectiveModuleName, blockNumber, a, b, c, d, tipo));
+					csvdatasBM.add(new CsvDataBM(i, j, blockUnderAnalysis, expectedMethod, expectedClass, dependenciesBlockUnderAnalysis.toString(), blockNumber, respectiveMethodName, respectiveClassName, respectiveModuleName, dependenciesMethodUnderAnalysis.toString(), lineUnderAnalysis, a, b, c, d, tipo));
 					
 					j++;
 				}
-				i++;
+				if(count) i++;
 			}
+			
 		}
 		CsvFileWriterBM.writeCsvFileBM(csvdatasBM);
 		return "";

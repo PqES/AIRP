@@ -1,5 +1,6 @@
 package airptool.core;
 
+import java.sql.SQLData;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,6 +13,8 @@ import java.util.Set;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 
+import com.google.common.collect.Collections2;
+
 import airptool.util.AirpUtil;
 
 public class DataStructure {
@@ -20,19 +23,15 @@ public class DataStructure {
 	 * dependencies
 	 */
 	public Map<String, Collection<Object[]>> projectClassesCP = null;
-	//public Map<String, Collection<Object[]>> projectClassesMC = null;
-	//public Map<String, Collection<Object[]>> projectClassesBM = null;
-	
-	
 	public Map<String, HashMap<String, Collection<Object[]>>> projectClassesMC = null;
-	public Map<String, HashMap<String, HashMap<Integer, Collection<Object[]>>>> projectClassesBM = null;
+	public Map<String, HashMap<String, HashMap<String, Collection<Object[]>>>> projectClassesBM = null;
 
 
 	public DataStructure(IProject project) throws CoreException, ParseException {
 		this.projectClassesCP = new HashMap<String, Collection<Object[]>>();
 		
 		this.projectClassesMC = new HashMap<String, HashMap<String, Collection<Object[]>>>();
-		this.projectClassesBM = new HashMap<String, HashMap<String, HashMap<Integer, Collection<Object[]>>>>();
+		this.projectClassesBM = new HashMap<String, HashMap<String, HashMap<String, Collection<Object[]>>>>();
 
 		Collection<String> classes = AirpUtil.getClassNames(project);
 		for (String className : classes) {
@@ -117,38 +116,38 @@ public class DataStructure {
 		return result;
 	}*/
 
-	public Map<String, Map<String, ArrayList<Integer>>> getProjectBlocks() {
-		Map<String, Map<String, ArrayList<Integer>>> result = new HashMap<String, Map<String, ArrayList<Integer>>>();
-		Map<String, ArrayList<Integer>> result2 = new HashMap<String, ArrayList<Integer>>();
-		ArrayList<Integer> listaInteger = new ArrayList<Integer>();
+	public Map<String, Map<String, ArrayList<String>>> getProjectBlocks() {
+		Map<String, Map<String, ArrayList<String>>> result = new HashMap<String, Map<String, ArrayList<String>>>();
+		Map<String, ArrayList<String>> result2 = new HashMap<String, ArrayList<String>>();
+		ArrayList<String> listBlocksNum = new ArrayList<String>();
 		String methodName= "";
 		String className= "";
 		
-		for (Map.Entry<String, HashMap<String, HashMap<Integer, Collection<Object[]>>>> entry : projectClassesBM.entrySet()){
-			listaInteger.clear();
+		for (Map.Entry<String, HashMap<String, HashMap<String, Collection<Object[]>>>> entry : projectClassesBM.entrySet()){
+			listBlocksNum.clear();
 			result2.clear();
-			 for(Map.Entry<String, HashMap<Integer, Collection<Object[]>>> entry2 : entry.getValue().entrySet()){
-				 for(Map.Entry<Integer, Collection<Object[]>> entry3 : entry2.getValue().entrySet()){
+			 for(Map.Entry<String, HashMap<String, Collection<Object[]>>> entry2 : entry.getValue().entrySet()){
+				 for(Map.Entry<String, Collection<Object[]>> entry3 : entry2.getValue().entrySet()){
 					 if(methodName.equals(entry2.getKey())){
-						 if(!listaInteger.contains(entry3.getKey())){
-							 listaInteger.add(entry3.getKey());
+						 if(!listBlocksNum.contains(entry3.getKey())){
+							 listBlocksNum.add(entry3.getKey());
 						 }
 					 }else{
-						 listaInteger.clear();
+						 listBlocksNum.clear();
 						 if(result2.containsKey(entry2.getKey())){
-							 listaInteger.addAll(result2.get(entry2.getKey()));
+							 listBlocksNum.addAll(result2.get(entry2.getKey()));
 						 }
 						 
-						 if(!listaInteger.contains(entry3.getKey())){
-							 listaInteger.add(entry3.getKey());
+						 if(!listBlocksNum.contains(entry3.getKey())){
+							 listBlocksNum.add(entry3.getKey());
 						 }
 						 methodName = entry2.getKey();
 						 className = entry.getKey();
 					 }
-					 result2.put(entry2.getKey(), new ArrayList<Integer>(listaInteger));
+					 result2.put(entry2.getKey(), new ArrayList<String>(listBlocksNum));
 				 }
 			 }
-			 result.put(entry.getKey(),new HashMap<String, ArrayList<Integer>>(result2)); 
+			 result.put(entry.getKey(),new HashMap<String, ArrayList<String>>(result2)); 
 		}
 		
 		return result;
@@ -158,11 +157,10 @@ public class DataStructure {
 		return projectClassesCP;
 	}
 	
-	public Map<String, HashMap<String, HashMap<Integer, Collection<Object[]>>>> getAllDependenciesBM() {
+	public Map<String, HashMap<String, HashMap<String, Collection<Object[]>>>> getAllDependenciesBM() {
 		return projectClassesBM;
 	}
 	
-	//public Map<String, Collection<Object[]>> getAllDependenciesMC() {
 	public Map<String, HashMap<String, Collection<Object[]>>> getAllDependenciesMC() {
 		return projectClassesMC;
 	}
@@ -176,10 +174,10 @@ public class DataStructure {
 		return projectClassesMC.get(className);
 	}
 	
-	public HashMap<Integer, Collection<Object[]>> getDependenciesBM(String className, String method) {
+	public HashMap<String, Collection<Object[]>> getDependenciesBM(String className, String method) {
 	//public Collection<Object[]> getDependenciesBM(String className) {
-		for(Map.Entry<String, HashMap<String, HashMap<Integer, Collection<Object[]>>>> entry : projectClassesBM.entrySet()){
-			for(Map.Entry<String, HashMap<Integer, Collection<Object[]>>> entry2 : entry.getValue().entrySet()){
+		for(Map.Entry<String, HashMap<String, HashMap<String, Collection<Object[]>>>> entry : projectClassesBM.entrySet()){
+			for(Map.Entry<String, HashMap<String, Collection<Object[]>>> entry2 : entry.getValue().entrySet()){
 				if(entry.getKey().equals(className) && entry2.getKey().equals(method)){
 					return entry2.getValue();
 				}
@@ -188,7 +186,7 @@ public class DataStructure {
 			return null;
 	}
 	
-	public HashMap<String,HashMap<Integer, Collection<Object[]>>> getDependenciesBM(String className) {
+	public HashMap<String,HashMap<String, Collection<Object[]>>> getDependenciesBM(String className) {
 		//public Collection<Object[]> getDependenciesBM(String className) {
 			
 			return projectClassesBM.get(className);
@@ -207,28 +205,32 @@ public class DataStructure {
 	public void updateDependenciesMC(String className, Collection<Object[]> dependencies) {
 		this.filterCommonDependencies(dependencies);
 		Map<String, Collection<Object[]>> tempMC = new HashMap<String, Collection<Object[]>>();
-		Collection<Object[]> listaMetodo = new ArrayList<Object[]>();
+		Collection<Object[]> colec = new ArrayList<Object[]>();
 		String methodName = "";
 		
-		for(Object[] o : dependencies){
-			if(methodName.equals(o[2].toString())){
-				listaMetodo.add(o);
+		projectClassesMC.put(className, new HashMap<String,Collection<Object[]>>());
+		//}
+			
+			
+			for(Object[] o : dependencies){
+				
 				methodName=o[2].toString();
-			}
-			else{
-				if(!methodName.equals("")){
-					tempMC.put(methodName, new ArrayList<Object[]>(listaMetodo));
+				
+				if(projectClassesMC.get(className)==null){
+					colec = new ArrayList<Object[]>();
+					colec.add(o);
+				}else if(projectClassesMC.get(className).get(methodName)==null){
+					colec = new ArrayList<Object[]>();
+					colec.add(o);
+				}else{
+					colec= new ArrayList<Object[]>(projectClassesMC.get(className).get(methodName));
+					colec.add(o);
 				}
-				listaMetodo.clear();
-				methodName=o[2].toString();
-				listaMetodo.add(o);
-			}	
+				
+
+				projectClassesMC.get(className).put(o[2].toString(), new ArrayList<Object[]>(colec));
+			}
 		}
-		
-		tempMC.put(methodName, new ArrayList<Object[]>(listaMetodo));
-		
-		projectClassesMC.put(className, new HashMap<String, Collection<Object[]>>(tempMC));
-	}
 	
 	/*public void updateDependenciesBM(String className, Collection<Object[]> dependencies) {
 		this.filterCommonDependencies(dependencies);
@@ -237,49 +239,82 @@ public class DataStructure {
 	
 	public void updateDependenciesBM(String className, Collection<Object[]> dependencies) {
 		this.filterCommonDependencies(dependencies);
-		Map<String, HashMap<Integer,Collection<Object[]>>> tempMC = new HashMap<String, HashMap<Integer,Collection<Object[]>>>();
-		Map<Integer, Collection<Object[]>> tempBM = new HashMap<Integer, Collection<Object[]>>();
+		Collection<Object[]> colec = new ArrayList<Object[]>();
+		Map<String, HashMap<String,Collection<Object[]>>> tempMC = new HashMap<String, HashMap<String,Collection<Object[]>>>();
+		Map<String, Collection<Object[]>> tempBM = new HashMap<String, Collection<Object[]>>();
 		Collection<Object[]> listaBloco = new ArrayList<Object[]>();
 		String methodName = "";
-		int bloco = -1;
+		String bloco = "";
+		boolean added=false;
+		//if(!projectClassesBM.containsKey(className)){
+		projectClassesBM.put(className, new HashMap<String, HashMap<String,Collection<Object[]>>>());
+	//}
+		
 		
 		for(Object[] o : dependencies){
+			
+			methodName=o[2].toString();
+			bloco= o[3].toString();
+			
+			if(projectClassesBM.get(className)==null){
+				colec = new ArrayList<Object[]>();
+				colec.add(o);
+			}else if(projectClassesBM.get(className).get(methodName)==null){
+				colec = new ArrayList<Object[]>();
+				colec.add(o);
+			}else if(projectClassesBM.get(className).get(methodName).get(bloco)==null){
+				colec = new ArrayList<Object[]>();
+				colec.add(o);
+			
+			}else{
+				colec= new ArrayList<Object[]>(projectClassesBM.get(className).get(methodName).get(bloco));
+				colec.add(o);
+			}
+			
+			if(!projectClassesBM.get(className).containsKey(o[2].toString())){
+				projectClassesBM.get(className).put(o[2].toString(), new HashMap<String, Collection<Object[]>>());
+			}
+			projectClassesBM.get(className).get(o[2].toString()).put(o[3].toString(),
+						new ArrayList<Object[]>(colec));
+		}
+			/*
 			if(methodName.equals(o[2].toString())){
-				if(bloco == Integer.parseInt(o[3].toString())){
+				if(bloco.equals(o[3].toString())){
 					listaBloco.add(o);
 					methodName=o[2].toString();
-					bloco= Integer.parseInt(o[3].toString());
+					bloco= o[3].toString();
 				}
 				else{
-					if(bloco != -1){
+					if(!bloco.equals("")){
 						tempBM.put(bloco, new ArrayList<Object[]>(listaBloco));
 					}
 					listaBloco.clear();
-					bloco= Integer.parseInt(o[3].toString());
+					bloco= o[3].toString();
 					methodName=o[2].toString();
 					listaBloco.add(o);
 				}
 			}
 			else{
-				if(!methodName.equals("") && bloco !=-1){
+				if(!methodName.equals("") && !bloco.equals("")){
 					tempBM.put(bloco, new ArrayList<Object[]>(listaBloco));
-					tempMC.put(methodName, new HashMap<Integer,Collection<Object[]>>(tempBM));
-					tempBM = new HashMap<Integer, Collection<Object[]>>();
+					tempMC.put(methodName, new HashMap<String,Collection<Object[]>>(tempBM));
+					tempBM = new HashMap<String, Collection<Object[]>>();
 				}
 				listaBloco.clear();
 				methodName=o[2].toString();
-				bloco= Integer.parseInt(o[3].toString());
+				bloco= o[3].toString();
 				listaBloco.add(o);
 			}	
 		}
 		
-		if(!methodName.equals("") && bloco !=-1){
+		if(!methodName.equals("") && !bloco.equals("")){
 		
 			tempBM.put(bloco, new ArrayList<Object[]>(listaBloco));
-			tempMC.put(methodName, new HashMap<Integer,Collection<Object[]>>(tempBM));
+			tempMC.put(methodName, new HashMap<String,Collection<Object[]>>(tempBM));
 		}
 		
-		projectClassesBM.put(className, new HashMap<String, HashMap<Integer,Collection<Object[]>>>(tempMC));
+		projectClassesBM.put(className, new HashMap<String, HashMap<String,Collection<Object[]>>>(tempMC));
+		*/
 	}
 	
 	/*public void updateDependenciesMC(String className, String methodName, Collection<Object[]> dependencies) {
@@ -301,7 +336,9 @@ public class DataStructure {
 				"java.lang.Short[][]", "java.lang.Integer[]", "java.lang.Integer[][]", "java.lang.Long[]", "java.lang.Long[][]",  
 				"java.lang.Float[]", "java.lang.Float[][]", "java.lang.Double[]", "java.lang.Double[][]", "java.lang.String[]", "java.lang.String[][]",
 				"java.lang.Object[]", "java.lang.Object[][]", "java.lang.Deprecated", "java.util.ArrayList", "java.util.ArrayList[]", "java.util.ArrayList[][]",
-				"java.lang.SuppressWarnings", "java.lang.Override", "java.lang.SafeVarargs" };
+				"java.util.ArrayList<[a-zA-Z]>", "java.util.ArrayList<[a-zA-Z]>[]", "java.util.ArrayList<.*>[][]",
+				"java.util.ArrayList[]<.*>", "java.util.ArrayList[][]<.*>",
+				"java.lang.SuppressWarnings", "java.lang.Override", "java.lang.SafeVarargs", "java.util.ArrayList<SQLData>", "java.util.ArrayList<String>", "java.util.ArrayList<JPanel>", "java.util.ArrayList<Long>", "java.util.ArrayList<Double>", "java.util.ArrayList<Integer>" };
 
 		for (Iterator<Object[]> it = dependencies.iterator(); it.hasNext();) {
 			Object[] o = it.next();
@@ -314,7 +351,7 @@ public class DataStructure {
 
 	private boolean contains(Object value, Object[] array) {
 		for (Object o : array) {
-			if (o.equals(value)) {
+			if (o.equals(value) || value.toString().startsWith("java.util.ArrayList")) {
 				return true;
 			}
 		}

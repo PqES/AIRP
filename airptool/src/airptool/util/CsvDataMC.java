@@ -6,9 +6,12 @@ public class CsvDataMC {
 	private long id2;
 	private String metodo;
 	private String classe;
-	private String pacote;
 	private String metodoDaClasse;
-	private int a, b ,c, d;
+	private String classeAlvo;
+	private String pacoteAlvo;
+	private String depUnder;
+	private String depAlvo;
+	private int linha, a, b ,c, d;
 	private String tipo;
 	/**
 	 * @param id
@@ -22,15 +25,19 @@ public class CsvDataMC {
 	 * @param d
 	 * @param tipo
 	 */
-	public CsvDataMC(long id, long id2, String metodo, String classe, String pacote, String metodoDaClasse, int a,
+	public CsvDataMC(long id, long id2, String metodo, String classe, String depUnder, String metodoDaClasse, String classeAlvo, String pacoteAlvo, String depAlvo, int linha, int a,
 			int b, int c, int d, String tipo) {
 		super();
 		this.id = id;
 		this.id2 = id2;
 		this.metodo = metodo;
 		this.classe = classe;
-		this.pacote = pacote;
+		this.pacoteAlvo = pacoteAlvo;
 		this.metodoDaClasse = metodoDaClasse;
+		this.classeAlvo = classeAlvo;
+		this.depUnder = depUnder;
+		this.depAlvo = depAlvo;
+		this.linha = linha;
 		this.a = a;
 		this.b = b;
 		this.c = c;
@@ -86,16 +93,16 @@ public class CsvDataMC {
 		this.classe = classe;
 	}
 	/**
-	 * @return the pacote
+	 * @return the pacoteAlvo
 	 */
-	public String getPacote() {
-		return pacote;
+	public String getPacoteAlvo() {
+		return pacoteAlvo;
 	}
 	/**
 	 * @param pacote the pacote to set
 	 */
-	public void setLastName(String pacote) {
-		this.pacote = pacote;
+	public void setPacoteAlvo(String pacoteAlvo) {
+		this.pacoteAlvo = pacoteAlvo;
 	}
 	/**
 	 * @return the metodo
@@ -108,6 +115,18 @@ public class CsvDataMC {
 	 */
 	public void setMetodoDaClasse(String metodoDaClasse) {
 		this.metodoDaClasse = metodoDaClasse;
+	}
+	/**
+	 * @return the linha
+	 */
+	public int getLinha() {
+		return linha;
+	}
+	/**
+	 * @param id the id to set
+	 */
+	public void setLinha(int linha) {
+		this.linha = linha;
 	}
 	/**
 	 * @return the a
@@ -170,10 +189,44 @@ public class CsvDataMC {
 		this.tipo = tipo;
 	}
 	
+	public String getClasseAlvo() {
+		return classeAlvo;
+	}
+	/**
+	 * @param metodo the metodo to set
+	 */
+	public void setClasseAlvo(String classeAlvo) {
+		this.classeAlvo = classeAlvo;
+	}
+	/**
+	 * @return the classe
+	 */
+	public String getDepUnder() {
+		return depUnder;
+	}
+	/**
+	 * @param classe the classe to set
+	 */
+	public void setDepUnder(String depUnder) {
+		this.depUnder = depUnder;
+	}
+	/**
+	 * @return the pacoteAlvo
+	 */
+	public String getDepAlvo() {
+		return depAlvo;
+	}
+	/**
+	 * @param pacote the pacote to set
+	 */
+	public void setDepAlvo(String depAlvo) {
+		this.depAlvo = depAlvo;
+	}
+	
 	@Override
 	public String toString() {
 		return "Data [id=" + id + ", metodo=" + metodo + ", classe=" + classe
-				+ ", pacote=" + pacote + ", a=" + a + ", b="
+				+ ", pacote=" + pacoteAlvo + ", a=" + a + ", b="
 				+ b + ", c=" + c + ", d=" + d + ", type=" + tipo +"]";
 	}
 }

@@ -65,9 +65,17 @@ public class CsvFileWriterMC {
 				fileWriter.append(COMMA_DELIMITER);
 				fileWriter.append(csvdMC.getClasse());
 				fileWriter.append(COMMA_DELIMITER);
-				fileWriter.append(csvdMC.getPacote());
+				fileWriter.append(csvdMC.getDepUnder());
 				fileWriter.append(COMMA_DELIMITER);
 				fileWriter.append(csvdMC.getMetodoDaClasse());
+				fileWriter.append(COMMA_DELIMITER);
+				fileWriter.append(csvdMC.getClasseAlvo());
+				fileWriter.append(COMMA_DELIMITER);
+				fileWriter.append(csvdMC.getPacoteAlvo());
+				fileWriter.append(COMMA_DELIMITER);
+				fileWriter.append(csvdMC.getDepAlvo());
+				fileWriter.append(COMMA_DELIMITER);
+				fileWriter.append(String.valueOf(csvdMC.getLinha()));
 				fileWriter.append(COMMA_DELIMITER);
 				fileWriter.append(String.valueOf(csvdMC.getA()));
 				fileWriter.append(COMMA_DELIMITER);

@@ -266,11 +266,11 @@ public class AirpBuilder extends IncrementalProjectBuilder {
 
 					dependenciesMC = tempO1;
 					
-					HashMap<String,HashMap<Integer, Collection<Object[]>>> tempBM = ds.getDependenciesBM(className);
+					HashMap<String,HashMap<String, Collection<Object[]>>> tempBM = ds.getDependenciesBM(className);
 					Collection<Object[]> tempO2 = new ArrayList<Object[]>();
 					
-					for(Map.Entry<String,HashMap<Integer, Collection<Object[]>>> entry : tempBM.entrySet()){
-						for(Map.Entry<Integer, Collection<Object[]>> entry2 : entry.getValue().entrySet()){
+					for(Map.Entry<String,HashMap<String, Collection<Object[]>>> entry : tempBM.entrySet()){
+						for(Map.Entry<String, Collection<Object[]>> entry2 : entry.getValue().entrySet()){
 							tempO2.addAll(entry2.getValue());
 						}
 					}

@@ -5,6 +5,7 @@ import java.awt.GridBagLayout;
 import java.awt.Point;
 import java.awt.Robot;
 import java.awt.event.ActionEvent;
+import java.sql.SQLData;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -48,6 +49,7 @@ public class ClassA1 {
         JFrame frame = new JFrame("JOptionPane showMessageDialog example");
         Robot robot = new Robot();
         robot.delay(40);
+        java.util.ArrayList<SQLData> Ar = new java.util.ArrayList<SQLData>();
         
         return calendar.get(Calendar.DAY_OF_MONTH);
         
@@ -116,9 +118,9 @@ public class ClassA1 {
 									java.lang.Integer I=3;
 									java.lang.Long L = 123456789L;
 									java.lang.Float F= 12345667F;
-									java.lang.Double = 5;
+									java.lang.Double d = 5.0;
 									java.lang.String St= "z";
-									java.lang.Object = new java.lang.Object();
+									java.lang.Object o = new java.lang.Object();
 									x++;
 								}
 								
@@ -167,7 +169,8 @@ public class ClassA1 {
 		java.lang.String[][] SSt = new java.lang.String[5][5];
 		java.lang.Object[] Ob = new java.lang.Object[5];
 		java.lang.Object[][] OOb = new java.lang.Object[5][5];
-		java.util.ArrayList<Integer>[] Ar = new java.util.ArrayList[5]; 
+		java.util.ArrayList<Double> Ar1 = new java.util.ArrayList<Double>(); 
+		java.util.ArrayList<Integer>[] Ar2 = new java.util.ArrayList[5]; 
 		java.util.ArrayList<String>[][] AAr= new java.util.ArrayList[5][5];
 	}
 	

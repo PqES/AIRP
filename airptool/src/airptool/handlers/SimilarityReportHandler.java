@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.MalformedURLException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -111,7 +112,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 
 				final Map<String, HashMap<String, Collection<Object[]>>> packagesDependenciesOriginal = AirpUtil.getPackagesDependencies(ds);
 				final Map<String, HashMap<String, Collection<Object[]>>> classDependenciesOriginal = ds.getAllDependenciesMC();
-				final Map<String, HashMap<String, HashMap<Integer, Collection<Object[]>>>> methodDependenciesOriginal = ds.getAllDependenciesBM();
+				final Map<String, HashMap<String, HashMap<String, Collection<Object[]>>>> methodDependenciesOriginal = ds.getAllDependenciesBM();
 				
 				final Collection<Object[]> universeOfDependenciesOriginal = ds.getUniverseOfDependencies();
 				// long inicioGeral = System.currentTimeMillis();
@@ -146,18 +147,21 @@ public class SimilarityReportHandler extends AbstractHandler {
 	}
 
 	private void calculate(final IProject project, final IJavaProject javaProject, final DataStructure ds,
-			final Map<String, HashMap<String, Collection<Object[]>>> packagesDependenciesOriginal, final Map<String, HashMap<String, Collection<Object[]>>> classDependenciesOriginal, final  Map<String, HashMap<String, HashMap<Integer, Collection<Object[]>>>> methodDependenciesOriginal,
+			final Map<String, HashMap<String, Collection<Object[]>>> packagesDependenciesOriginal, final Map<String, HashMap<String, Collection<Object[]>>> classDependenciesOriginal, final  Map<String, HashMap<String, HashMap<String, Collection<Object[]>>>> methodDependenciesOriginal,
 			final Collection<Object[]> universeOfDependenciesOriginal, final Function<Object[], String> function, final boolean set,
-			final String identifier) throws FileNotFoundException, JavaModelException, CoreException {
+			final String identifier) throws FileNotFoundException, JavaModelException, CoreException, MalformedURLException, ClassNotFoundException {
 
 			Collection<String> classes = ds.getProjectClasses();
 			Map<String, ArrayList<String>> methods = ds.getProjectMethods();
-			Map<String, Map<String, ArrayList<Integer>>> blocos = ds.getProjectBlocks();
+			Map<String, Map<String, ArrayList<String>>> blocos = ds.getProjectBlocks();
 			
 			// Change the packages
 			Map<String, HashMap<String, Collection<? extends Object>>> packagesDependencies = new HashMap<String, HashMap<String, Collection<? extends Object>>>();
 			Map<String, HashMap<String, Collection<? extends Object>>> classDependencies = new HashMap<String, HashMap<String, Collection<? extends Object>>>();
-			Map<String, HashMap<String, HashMap<Integer,Collection<? extends Object>>>> methodDependencies = new HashMap<String, HashMap<String, HashMap<Integer, Collection<? extends Object>>>>();
+			Map<String, HashMap<String, HashMap<String,Collection<? extends Object>>>> methodDependencies = new HashMap<String, HashMap<String, HashMap<String, Collection<? extends Object>>>>();
+			
+			Map<String, HashMap<String, Collection<? extends Object>>> classDependenciesInterAbst = new HashMap<String, HashMap<String, Collection<? extends Object>>>();
+			Map<String, HashMap<String, HashMap<String,Collection<? extends Object>>>> methodDependenciesInterAbst = new HashMap<String, HashMap<String, HashMap<String, Collection<? extends Object>>>>();
 			
 			
 			for (Map.Entry<String, HashMap<String, Collection<Object[]>>> entry : packagesDependenciesOriginal.entrySet()) {
@@ -165,17 +169,21 @@ public class SimilarityReportHandler extends AbstractHandler {
 					for(Map.Entry<String, Collection<Object[]>> entry2 : entry.getValue().entrySet()){
 						if(!entry2.getKey().toLowerCase().contains("test")){
 							if (set) {
-								if(!packagesDependencies.containsKey(entry.getKey())){
-									packagesDependencies.put(entry.getKey(), new HashMap<String, Collection<? extends Object>>());
+								if(!packagesDependenciesOriginal.get(entry.getKey()).get(entry2.getKey()).isEmpty()){
+									if(!packagesDependencies.containsKey(entry.getKey())){
+										packagesDependencies.put(entry.getKey(), new HashMap<String, Collection<? extends Object>>());
+									}
+									packagesDependencies.get(entry.getKey()).put(entry2.getKey(), 
+											new HashSet<Object>(Collections2.transform(packagesDependenciesOriginal.get(entry.getKey()).get(entry2.getKey()), function)));
 								}
-								packagesDependencies.get(entry.getKey()).put(entry2.getKey(), 
-										new HashSet<Object>(Collections2.transform(packagesDependenciesOriginal.get(entry.getKey()).get(entry2.getKey()), function)));
 							} else {
-								if(!packagesDependencies.containsKey(entry.getKey())){
-									packagesDependencies.put(entry.getKey(), new HashMap<String, Collection<? extends Object>>());
+								if(!packagesDependenciesOriginal.get(entry.getKey()).get(entry2.getKey()).isEmpty()){
+									if(!packagesDependencies.containsKey(entry.getKey())){
+										packagesDependencies.put(entry.getKey(), new HashMap<String, Collection<? extends Object>>());
+									}
+									packagesDependencies.get(entry.getKey()).put(entry2.getKey(), 
+											Collections2.transform(packagesDependenciesOriginal.get(entry.getKey()).get(entry2.getKey()), function));
 								}
-								packagesDependencies.get(entry.getKey()).put(entry2.getKey(), 
-										Collections2.transform(packagesDependenciesOriginal.get(entry.getKey()).get(entry2.getKey()), function));
 							}
 						}
 					}
@@ -183,30 +191,55 @@ public class SimilarityReportHandler extends AbstractHandler {
 			}
 			
 			
-			for(Map.Entry<String, HashMap<String, HashMap<Integer, Collection<Object[]>>>> entry : methodDependenciesOriginal.entrySet()){
+			
+			for(Map.Entry<String, HashMap<String, HashMap<String, Collection<Object[]>>>> entry : methodDependenciesOriginal.entrySet()){
 				//HashMap<String, Collection<? extends Object>> tempMC = new HashMap<String, Collection<? extends Object>>();
 				if(!entry.getKey().toLowerCase().contains("test")){
-					for(Map.Entry<String, HashMap<Integer, Collection<Object[]>>> entry2 : entry.getValue().entrySet()){
+					for(Map.Entry<String, HashMap<String, Collection<Object[]>>> entry2 : entry.getValue().entrySet()){
 						if(!entry.getKey().endsWith(entry2.getKey().toLowerCase())){
-							for(Map.Entry<Integer, Collection<Object[]>> entry3 : entry2.getValue().entrySet()){
-								if (set) {
-									if(!methodDependencies.containsKey(entry.getKey())){
-										methodDependencies.put(entry.getKey(), new HashMap<String, HashMap<Integer, Collection<? extends Object>>>());
+							for(Map.Entry<String, Collection<Object[]>> entry3 : entry2.getValue().entrySet()){
+								if(!entry3.getValue().isEmpty()){
+									if (set) {
+										if(AirpUtil.checkIfIsNotInterface(javaProject, entry.getKey())){	
+											if(!methodDependencies.containsKey(entry.getKey())){
+												methodDependencies.put(entry.getKey(), new HashMap<String, HashMap<String, Collection<? extends Object>>>());
+											}
+											if(!methodDependencies.get(entry.getKey()).containsKey(entry2.getKey())){
+												methodDependencies.get(entry.getKey()).put(entry2.getKey(), new HashMap<String, Collection<? extends Object>>());
+											}
+											methodDependencies.get(entry.getKey()).get(entry2.getKey()).put(entry3.getKey(),
+														new HashSet<Object>(Collections2.transform(entry3.getValue(), function)));
+										}else {
+											if(!methodDependenciesInterAbst.containsKey(entry.getKey())){
+												methodDependenciesInterAbst.put(entry.getKey(), new HashMap<String, HashMap<String, Collection<? extends Object>>>());
+											}
+											if(!methodDependenciesInterAbst.get(entry.getKey()).containsKey(entry2.getKey())){
+												methodDependenciesInterAbst.get(entry.getKey()).put(entry2.getKey(), new HashMap<String, Collection<? extends Object>>());
+											}
+											methodDependenciesInterAbst.get(entry.getKey()).get(entry2.getKey()).put(entry3.getKey(),
+														new HashSet<Object>(Collections2.transform(entry3.getValue(), function)));
+										}
+									} else {
+										if(AirpUtil.checkIfIsNotInterface(javaProject, entry.getKey())){
+											if(!methodDependencies.containsKey(entry.getKey())){
+												methodDependencies.put(entry.getKey(), new HashMap<String, HashMap<String, Collection<? extends Object>>>());
+											}
+											if(!methodDependencies.get(entry.getKey()).containsKey(entry2.getKey())){
+												methodDependencies.get(entry.getKey()).put(entry2.getKey(), new HashMap<String, Collection<? extends Object>>());
+											}
+											methodDependencies.get(entry.getKey()).get(entry2.getKey()).put(entry3.getKey(),
+													Collections2.transform(entry3.getValue(), function));
+										}else{
+											if(!methodDependenciesInterAbst.containsKey(entry.getKey())){
+												methodDependenciesInterAbst.put(entry.getKey(), new HashMap<String, HashMap<String, Collection<? extends Object>>>());
+											}
+											if(!methodDependenciesInterAbst.get(entry.getKey()).containsKey(entry2.getKey())){
+												methodDependenciesInterAbst.get(entry.getKey()).put(entry2.getKey(), new HashMap<String, Collection<? extends Object>>());
+											}
+											methodDependenciesInterAbst.get(entry.getKey()).get(entry2.getKey()).put(entry3.getKey(),
+													Collections2.transform(entry3.getValue(), function));
+										}
 									}
-									if(!methodDependencies.get(entry.getKey()).containsKey(entry2.getKey())){
-										methodDependencies.get(entry.getKey()).put(entry2.getKey(), new HashMap<Integer, Collection<? extends Object>>());
-									}
-									methodDependencies.get(entry.getKey()).get(entry2.getKey()).put(entry3.getKey(),
-												new HashSet<Object>(Collections2.transform(entry3.getValue(), function)));
-								} else {
-									if(!methodDependencies.containsKey(entry.getKey())){
-										methodDependencies.put(entry.getKey(), new HashMap<String, HashMap<Integer, Collection<? extends Object>>>());
-									}
-									if(!methodDependencies.get(entry.getKey()).containsKey(entry2.getKey())){
-										methodDependencies.get(entry.getKey()).put(entry2.getKey(), new HashMap<Integer, Collection<? extends Object>>());
-									}
-									methodDependencies.get(entry.getKey()).get(entry2.getKey()).put(entry3.getKey(),
-											Collections2.transform(entry3.getValue(), function));
 								}
 							}
 						}
@@ -217,15 +250,20 @@ public class SimilarityReportHandler extends AbstractHandler {
 			// Change the universe
 			Collection<? extends Object> universeOfDependencies = Collections2.transform(universeOfDependenciesOriginal, function);
 			
-			for (Map.Entry<String, Map<String, ArrayList<Integer>>> entry : blocos.entrySet()){
+			for (Map.Entry<String, Map<String, ArrayList<String>>> entry : blocos.entrySet()){
 				String expectedClass = entry.getKey();
-				for (Map.Entry<String, ArrayList<Integer>> entry2 : entry.getValue().entrySet()){
+				for (Map.Entry<String, ArrayList<String>> entry2 : entry.getValue().entrySet()){
 					String expectedMethod = entry2.getKey();
-					Map<Integer, Collection<Object[]>> depBM = ds.getDependenciesBM(expectedClass, expectedMethod);
-					for(Map.Entry<Integer, Collection<Object[]>> entryBM : depBM.entrySet()){
+					Map<String, Collection<Object[]>> depBM = ds.getDependenciesBM(expectedClass, expectedMethod);
+					for(Map.Entry<String, Collection<Object[]>> entryBM : depBM.entrySet()){
 					
 					String pkg = AirpUtil.getPackageFromClassName(expectedClass);
 					String pkgclass = pkg+"."+expectedClass;
+					int lineUnderAnalysis=0;
+					for(Object[] obj: entryBM.getValue()){
+						
+						lineUnderAnalysis = Integer.parseInt(obj[5].toString());
+					}
 					
 					if (pkgclass.toLowerCase().contains("test")) {
 						//outLog.println("ignored (test file).");
@@ -242,6 +280,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 					if (!AirpUtil.moreThanNDependencies(entryBM.getValue(), 3)) {
 						//outLog.println("ignored (uses less than 5 types).");
 						//salvaBM=false;
+
 						continue;
 					}
 					
@@ -251,7 +290,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 						continue;
 					}
 					
-				
+					Collection<? extends Object> tempRemoved = null;
 					Collection<Object[]> dependenciesBlockUnderAnalysisOriginal = entryBM.getValue();
 					
 					
@@ -320,6 +359,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 								}
 							}
 							*/
+							tempRemoved = methodDependencies.get(className).get(methodName).get(entryBM.getKey());
 							methodDependencies.get(className).get(methodName).remove(entryBM.getKey());
 							
 							//methodDependencies.get(pkg).get(className).put(methodName,
@@ -339,9 +379,13 @@ public class SimilarityReportHandler extends AbstractHandler {
 								dependenciesBlockUnderAnalysisOriginal, function);
 						
 						if (!set) {
-							
-							StringBuilder s= SuitableModule.calculateAllBM(ds, expectedClass, entryBM.getKey(), expectedMethod, dependenciesBlockUnderAnalysis,
-									methodDependencies, universeOfDependencies);
+							if(AirpUtil.checkIfIsNotInterface(javaProject, expectedClass)){
+								StringBuilder s= SuitableModule.calculateAllBM(ds, expectedClass, entryBM.getKey(), expectedMethod, dependenciesBlockUnderAnalysis,
+									methodDependencies, universeOfDependencies, lineUnderAnalysis);
+							} else{
+								StringBuilder s= SuitableModule.calculateAllBM(ds, expectedClass, entryBM.getKey(), expectedMethod, dependenciesBlockUnderAnalysis,
+										methodDependenciesInterAbst, universeOfDependencies, lineUnderAnalysis);
+							}
 					
 							
 						} else {
@@ -352,16 +396,19 @@ public class SimilarityReportHandler extends AbstractHandler {
 							methodDependencies.put(expectedClass, new HashMap<String, Collection<? extends Object>>(tempMC));
 						
 						*/	
-							
-							StringBuilder s= SuitableModule.calculateAllBM(ds, expectedClass, entryBM.getKey(), expectedMethod, new HashSet<Object>(
-									dependenciesBlockUnderAnalysis), methodDependencies, new HashSet<Object>(universeOfDependencies));
-						
+							if(AirpUtil.checkIfIsNotInterface(javaProject, expectedClass)){
+								StringBuilder s= SuitableModule.calculateAllBM(ds, expectedClass, entryBM.getKey(), expectedMethod, new HashSet<Object>(
+									dependenciesBlockUnderAnalysis), methodDependencies, new HashSet<Object>(universeOfDependencies), lineUnderAnalysis);
+							} else {
+								StringBuilder s= SuitableModule.calculateAllBM(ds, expectedClass, entryBM.getKey(), expectedMethod, new HashSet<Object>(
+										dependenciesBlockUnderAnalysis), methodDependenciesInterAbst, new HashSet<Object>(universeOfDependencies), lineUnderAnalysis);
+							}
 						}
 					
 
 					// Put it back after
 					
-						methodDependencies.get(className).get(methodName).put(entryBM.getKey(), entryBM.getValue());
+						methodDependencies.get(className).get(methodName).put(entryBM.getKey(), new HashSet<Object>(tempRemoved));
 				
 					}
 					
@@ -404,20 +451,40 @@ public class SimilarityReportHandler extends AbstractHandler {
 				if(!entry.getKey().toLowerCase().contains("test")){
 					
 					for(Map.Entry<String, Collection<Object[]>> entry2 : entry.getValue().entrySet()){
-						if(!entry.getKey().endsWith(entry2.getKey().toLowerCase())){
-							if (set) {
-								if(!classDependencies.containsKey(entry.getKey())){
-									classDependencies.put(entry.getKey(), new HashMap<String, Collection<? extends Object>>());
+						if(!entry.getKey().toLowerCase().endsWith(entry2.getKey().toLowerCase())){
+							if(!classDependenciesOriginal.get(entry.getKey()).get(entry2.getKey()).isEmpty()){
+								if (set) {
+									if(AirpUtil.checkIfIsNotInterface(javaProject, entry.getKey())){
+										if(!classDependencies.containsKey(entry.getKey())){
+											classDependencies.put(entry.getKey(), new HashMap<String, Collection<? extends Object>>());
+										}
+										
+										classDependencies.get(entry.getKey()).put(entry2.getKey(),
+											new HashSet<Object>(Collections2.transform(classDependenciesOriginal.get(entry.getKey()).get(entry2.getKey()), function)));
+									} else{
+										if(!classDependenciesInterAbst.containsKey(entry.getKey())){
+											classDependenciesInterAbst.put(entry.getKey(), new HashMap<String, Collection<? extends Object>>());
+										}
+										
+										classDependenciesInterAbst.get(entry.getKey()).put(entry2.getKey(),
+											new HashSet<Object>(Collections2.transform(classDependenciesOriginal.get(entry.getKey()).get(entry2.getKey()), function)));
+									} 
+								} else {
+									if(AirpUtil.checkIfIsNotInterface(javaProject, entry.getKey())){
+										if(!classDependencies.containsKey(entry.getKey())){
+											classDependencies.put(entry.getKey(), new HashMap<String, Collection<? extends Object>>());
+										}
+										
+										classDependencies.get(entry.getKey()).put(entry2.getKey(), Collections2.transform(classDependenciesOriginal.get(entry.getKey()).get(entry2.getKey()), function));
+									} else{
+										if(!classDependenciesInterAbst.containsKey(entry.getKey())){
+											classDependenciesInterAbst.put(entry.getKey(), new HashMap<String, Collection<? extends Object>>());
+										}
+										
+										classDependenciesInterAbst.get(entry.getKey()).put(entry2.getKey(), Collections2.transform(classDependenciesOriginal.get(entry.getKey()).get(entry2.getKey()), function));
+										
+									}
 								}
-								
-								classDependencies.get(entry.getKey()).put(entry2.getKey(),
-									new HashSet<Object>(Collections2.transform(classDependenciesOriginal.get(entry.getKey()).get(entry2.getKey()), function)));
-							} else {
-								if(!classDependencies.containsKey(entry.getKey())){
-									classDependencies.put(entry.getKey(), new HashMap<String, Collection<? extends Object>>());
-								}
-								
-								classDependencies.get(entry.getKey()).put(entry2.getKey(), Collections2.transform(classDependenciesOriginal.get(entry.getKey()).get(entry2.getKey()), function));
 							}
 						}
 					}
@@ -431,6 +498,15 @@ public class SimilarityReportHandler extends AbstractHandler {
 					
 					String pkg = AirpUtil.getPackageFromClassName(expectedClass);
 					String pkgclass = pkg+"."+expectedClass;
+					int lineUnderAnalysis=0;
+						for(Object[] obj: entryMC.getValue()){
+		
+							lineUnderAnalysis = Integer.parseInt(obj[4].toString());
+						}
+					
+						if(expectedClass.toLowerCase().endsWith(entryMC.getKey().toLowerCase())){
+							continue;
+						}
 					
 					if (pkgclass.toLowerCase().contains("test")) {
 						//outLog.println("ignored (test file).");
@@ -458,6 +534,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 					}
 					
 					Collection<Object[]> dependenciesMethodUnderAnalysisOriginal = entryMC.getValue();
+					Collection<? extends Object> tempRemoved= null;
 					
 					/*Map<String, Collection<Object[]>> classDependenciesOriginal2 = new HashMap<String, Collection<Object[]>>();
 					Collection<Object[]> objClass= new ArrayList<Object[]>();;
@@ -516,6 +593,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 									}
 								}
 							}*/
+							tempRemoved = classDependencies.get(className).get(entryMC.getKey());
 							classDependencies.get(className).remove(entryMC.getKey());
 						}
 						catch(NullPointerException npe){
@@ -529,21 +607,30 @@ public class SimilarityReportHandler extends AbstractHandler {
 								dependenciesMethodUnderAnalysisOriginal, function);
 						
 						if (!set) {
-							
-							StringBuilder b = SuitableModule.calculateAllMC(ds, entryMC.getKey(), expectedClass, dependenciesMethodUnderAnalysis,
-									classDependencies, universeOfDependencies);
+							if(AirpUtil.checkIfIsNotInterface(javaProject, expectedClass)){
+								StringBuilder b = SuitableModule.calculateAllMC(ds, entryMC.getKey(), expectedClass, dependenciesMethodUnderAnalysis,
+									classDependencies, universeOfDependencies, lineUnderAnalysis);
+							} else{
+								StringBuilder b = SuitableModule.calculateAllMC(ds, entryMC.getKey(), expectedClass, dependenciesMethodUnderAnalysis,
+										classDependenciesInterAbst, universeOfDependencies, lineUnderAnalysis);
+							}
 							
 						} else {
 							// It is not linked with the original list (because HashSet)
 							
-							StringBuilder b = SuitableModule.calculateAllMC(ds, entryMC.getKey(), expectedClass, new HashSet<Object>(
-									dependenciesMethodUnderAnalysis), classDependencies, new HashSet<Object>(universeOfDependencies));
+							if(AirpUtil.checkIfIsNotInterface(javaProject, expectedClass)){
+								StringBuilder b = SuitableModule.calculateAllMC(ds, entryMC.getKey(), expectedClass, new HashSet<Object>(
+									dependenciesMethodUnderAnalysis), classDependencies, new HashSet<Object>(universeOfDependencies), lineUnderAnalysis);
+							} else{
+								StringBuilder b = SuitableModule.calculateAllMC(ds, entryMC.getKey(), expectedClass, new HashSet<Object>(
+										dependenciesMethodUnderAnalysis), classDependenciesInterAbst, new HashSet<Object>(universeOfDependencies), lineUnderAnalysis);
+							}
 						}
 		
 						// Put it back after
 						//classDependenciesOriginal2.get(expectedClass).addAll(dependenciesMethodUnderAnalysisOriginal2);
 						
-						classDependencies.get(className).put(entryMC.getKey(), entryMC.getValue());
+						classDependencies.get(className).put(entryMC.getKey(), new HashSet<Object>(tempRemoved));
 					}
 				}
 			}
@@ -580,11 +667,12 @@ public class SimilarityReportHandler extends AbstractHandler {
 					continue;
 				}
 
-				
+				Collection<? extends Object> tempRemoved = null;
 
 				Collection<Object[]> dependenciesClassUnderAnalysisOriginal = ds.getDependenciesCP(classUnderAnalysis);	
 
 				// Disregard dependencies of the own class
+				tempRemoved = packagesDependencies.get(expectedModule).get(classUnderAnalysis);
 				packagesDependencies.get(expectedModule).remove(classUnderAnalysis);
 				
 				
@@ -603,7 +691,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 				}
 
 				// Put it back after
-				packagesDependencies.get(expectedModule).put(classUnderAnalysis, ds.getDependenciesCP(classUnderAnalysis));
+				packagesDependencies.get(expectedModule).put(classUnderAnalysis, new HashSet<Object>(tempRemoved));
 
 				/*if (set) {
 					// Restore what it was

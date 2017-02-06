@@ -3,6 +3,10 @@ package airptool.util;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Modifier;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -671,10 +675,10 @@ public final class AirpUtil {
 		return true;
 	}
 	
-	public static boolean isAloneInItsMethod(Map<String, Map<String, ArrayList<Integer>>> blocos, String methodName, String className) throws JavaModelException, CoreException {
-		for (Map.Entry<String, Map<String, ArrayList<Integer>>> entry : blocos.entrySet()){
+	public static boolean isAloneInItsMethod(Map<String, Map<String, ArrayList<String>>> blocos, String methodName, String className) throws JavaModelException, CoreException {
+		for (Map.Entry<String, Map<String, ArrayList<String>>> entry : blocos.entrySet()){
 			String className2=entry.getKey();
-			for (Map.Entry<String, ArrayList<Integer>> entry2 : entry.getValue().entrySet()){
+			for (Map.Entry<String, ArrayList<String>> entry2 : entry.getValue().entrySet()){
 				if(entry2.getKey().equals(methodName) && className2.equals(className)){
 					if(entry2.getValue().size()>1) return false;
 				}
@@ -730,7 +734,7 @@ public final class AirpUtil {
 		return packagesDependencies;
 	}
 	
-	public static ArrayList<String> getClassImplements(String className, DataStructure ds) {
+/*	public static ArrayList<String> getClassImplements(String className, DataStructure ds) {
 		ArrayList<String> classesImplemented = new ArrayList<String>();
 		
 		Collection<Object[]> dependencies = ds.getDependenciesCP(className);
@@ -742,4 +746,40 @@ public final class AirpUtil {
 		}
 		return classesImplemented;
 	}
+*/
+	
+	public static boolean checkIfIsNotInterface(IJavaProject javaProject, final String className) throws JavaModelException, MalformedURLException, ClassNotFoundException {
+		//return true;
+		for (IPackageFragmentRoot folder : javaProject.getAllPackageFragmentRoots()) {
+			if (folder.getKind() == IPackageFragmentRoot.K_SOURCE) {
+				IPath path = folder.getPath();
+				path = path.removeFirstSegments(1);
+				IPath path2 = path;
+
+				if (className.contains("$")) {
+					path2 = path2.append(className.substring(0, className.indexOf('$')).replaceAll("[.]", "" + IPath.SEPARATOR) + ".java");
+				} else {
+					path2 = path2.append(className.replaceAll("[.]", "" + IPath.SEPARATOR) + ".java");
+				}
+
+				IFile file = javaProject.getProject().getFile(path2);
+				if (file.exists()) {
+					String caminho = folder.getResource().getRawLocation().toFile().toURI().toURL().toString();
+					
+					URLClassLoader loader = new URLClassLoader(new URL[] {
+				            new URL(caminho.substring(0, caminho.length()-4)+"bin/")
+				    });
+					
+					Class c = loader.loadClass(className);
+					
+					if(!Modifier.isInterface(c.getModifiers())){
+						return true;
+					}
+					
+				}
+			}
+		}
+		return false;
+	}
 }
+

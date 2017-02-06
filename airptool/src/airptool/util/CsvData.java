@@ -5,8 +5,10 @@ public class CsvData {
 	private long id;
 	private long id2;
 	private String classe;
-	private String pacote;
+	private String pacoteAlvo;
 	private String classeDoPacote;
+	private String depUnder;
+	private String depAlvo;
 	private int a, b ,c, d;
 	private String tipo;
 	/**
@@ -20,14 +22,16 @@ public class CsvData {
 	 * @param d
 	 * @param tipo
 	 */
-	public CsvData(long id, long id2, String classe, String pacote, String classeDoPacote, int a,
+	public CsvData(long id, long id2, String classe, String depUnder, String classeDoPacote, String pacoteAlvo, String depAlvo, int a,
 			int b, int c, int d, String tipo) {
 		super();
 		this.id = id;
 		this.id2 = id2;
 		this.classe = classe;
-		this.pacote = pacote;
+		this.pacoteAlvo = pacoteAlvo;
 		this.classeDoPacote = classeDoPacote;
+		this.depUnder = depUnder;
+		this.depAlvo = depAlvo;
 		this.a = a;
 		this.b = b;
 		this.c = c;
@@ -73,14 +77,14 @@ public class CsvData {
 	/**
 	 * @return the pacote
 	 */
-	public String getPacote() {
-		return pacote;
+	public String getPacoteAlvo() {
+		return pacoteAlvo;
 	}
 	/**
 	 * @param pacote the pacote to set
 	 */
-	public void setLastName(String pacote) {
-		this.pacote = pacote;
+	public void setPacoteAlvo(String pacoteAlvo) {
+		this.pacoteAlvo = pacoteAlvo;
 	}
 	
 	public String getClasseDoPacote() {
@@ -153,10 +157,30 @@ public class CsvData {
 		this.tipo = tipo;
 	}
 	
+	public String getDepUnder() {
+		return depUnder;
+	}
+	/**
+	 * @param pacote the pacote to set
+	 */
+	public void setDepUnder(String depUnder) {
+		this.depUnder = depUnder;
+	}
+	
+	public String getDepAlvo() {
+		return depAlvo;
+	}
+	/**
+	 * @param classe the classe to set
+	 */
+	public void setDepAlvo(String depAlvo) {
+		this.depAlvo = depAlvo;
+	}
+	
 	@Override
 	public String toString() {
 		return "Data [id=" + id + ", classe=" + classe
-				+ ", pacote=" + pacote + ", a=" + a + ", b="
+				+ ", pacote=" + pacoteAlvo + ", a=" + a + ", b="
 				+ b + ", c=" + c + ", d=" + d + ", type=" + tipo +"]";
 	}
 }
