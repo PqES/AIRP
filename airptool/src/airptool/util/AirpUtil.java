@@ -43,7 +43,7 @@ public final class AirpUtil {
 	public static final String DATA_FOLDER = "airpdata";
 
 	// TODO: To be parameterized
-	public static final String TEMP_FOLDER = "/Users/arthurfp/Desktop/REPORTS/";
+	public static final String TEMP_FOLDER = System.getProperty("user.home") + "/Desktop";
 
 	// TODO: Construtor private e vazio. Ver se deve mudar
 	private AirpUtil() {

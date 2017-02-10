@@ -47,7 +47,7 @@ public class CsvFileWriterBM {
 		FileWriter fileWriter = null;
 				
 		try {
-			fileWriter = new FileWriter("/Users/arthurfp/Desktop/dataBM.csv", true);
+			fileWriter = new FileWriter(AirpUtil.TEMP_FOLDER + "/dataBM.csv", true);
 
 			//Write the CSV file header
 			//fileWriter.append(FILE_HEADER.toString());

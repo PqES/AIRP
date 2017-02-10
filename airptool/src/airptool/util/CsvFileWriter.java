@@ -47,7 +47,7 @@ public class CsvFileWriter {
 		FileWriter fileWriter = null;
 				
 		try {
-			fileWriter = new FileWriter("/Users/arthurfp/Desktop/dataCP.csv", true);
+			fileWriter = new FileWriter(AirpUtil.TEMP_FOLDER + "/dataCP.csv", true);
 
 			//Write the CSV file header
 			//fileWriter.append(FILE_HEADER.toString());
