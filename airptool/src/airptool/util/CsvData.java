@@ -38,6 +38,22 @@ public class CsvData {
 		this.d = d;
 		this.tipo = tipo;
 	}
+	
+	public CsvData(double mean, String classAnalyzed, String targetPackage){
+		this.id = 0;
+		this.id2 = 0;
+		this.classe = classAnalyzed;
+		this.pacoteAlvo = targetPackage;
+		this.classeDoPacote = "-";
+		this.depUnder = "-";
+		this.depAlvo = "-";
+		this.a = 0;
+		this.b = 0;
+		this.c = 0;
+		this.d = 0;
+		this.tipo = ""+mean;
+	}
+	
 	/**
 	 * @return the id
 	 */

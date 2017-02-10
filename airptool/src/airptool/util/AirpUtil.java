@@ -3,6 +3,7 @@ package airptool.util;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -648,7 +649,7 @@ public final class AirpUtil {
 		return qualifiedClassName.substring(qualifiedClassName.lastIndexOf(".") + 1);
 	}
 
-	public static boolean isAloneInItsPackage(IJavaProject javaProject, String className) throws JavaModelException, CoreException {
+	/*public static boolean isAloneInItsPackage(DataStructure ds, String className, ) throws JavaModelException, CoreException {
 		IFile file = getFileFromClassName(javaProject, className);
 		if (file.getParent().getType() == IResource.FOLDER) {
 			IFolder folder = (IFolder) file.getParent();
@@ -664,25 +665,58 @@ public final class AirpUtil {
 		}
 		return true;
 	}
+	*/
 	
-	public static boolean isAloneInItsClass(Map<String, ArrayList<String>> methods, String className) throws JavaModelException, CoreException {
+	public static boolean isAloneInItsPackage(DataStructure ds, String className, String packageName, Collection<String> classes) throws JavaModelException, CoreException {
+		int count=0;
+		for(String c : classes){
+			if(c.substring(0, c.lastIndexOf(".")).equals(packageName)){
+				if(moreThanNDependencies(ds.getDependenciesCP(c),3) && !ds.getDependenciesCP(c).isEmpty() && !c.toLowerCase().contains("test")){
+					count++;
+				}
+			}
+		}
+		
+		if(count>=3) return false;
+		return true;
+	}
+	
+	public static boolean isAloneInItsClass(Map<String, Collection<Object[]>> methods, String expectedClass) throws JavaModelException, CoreException {
 
-		for (Map.Entry<String, ArrayList<String>> entry : methods.entrySet()){
-				if(entry.getKey().equals(className)){
-					if(entry.getValue().size()>1) return false;
-				} 
+		if(methods.entrySet().size()>=3){
+			int count =0;
+			for (Map.Entry<String, Collection<Object[]>> entry : methods.entrySet()){
+				if(moreThanNDependencies(entry.getValue(),3) && !entry.getValue().isEmpty() && !expectedClass.toLowerCase().endsWith(entry.getKey().toLowerCase())){
+					count++;
+				}
+			}
+			if(count>=3) return false;
 		}
 		return true;
 	}
 	
-	public static boolean isAloneInItsMethod(Map<String, Map<String, ArrayList<String>>> blocos, String methodName, String className) throws JavaModelException, CoreException {
-		for (Map.Entry<String, Map<String, ArrayList<String>>> entry : blocos.entrySet()){
-			String className2=entry.getKey();
-			for (Map.Entry<String, ArrayList<String>> entry2 : entry.getValue().entrySet()){
-				if(entry2.getKey().equals(methodName) && className2.equals(className)){
-					if(entry2.getValue().size()>1) return false;
+/*	public static boolean isAloneInItsClass2(Map<String, ArrayList<String>> methods, String className) throws JavaModelException, CoreException {
+
+		for (Map.Entry<String, ArrayList<String>> entry : methods.entrySet()){
+				if(entry.getKey().equals(className)){
+					if(entry.getValue().size()>=3) {
+						for()return false;
+					}
+				} 
+		}
+		return true;
+	}
+
+*/
+	public static boolean isAloneInItsMethod(Map<String, Collection<Object[]>> blocos) throws JavaModelException, CoreException {
+		if(blocos.entrySet().size()>=3){
+			int count =0;
+			for (Map.Entry<String, Collection<Object[]>> entry : blocos.entrySet()){
+				if(moreThanNDependencies(entry.getValue(),3) && !entry.getValue().isEmpty()){
+					count++;
 				}
 			}
+			if(count>=3) return false;
 		}
 		return true;
 	}
@@ -699,12 +733,12 @@ public final class AirpUtil {
 		return false;
 	}
 	
-	public static boolean moreThanNDependenciesBM(Collection<Object[]> dependencies, int referenceSize) {
+	/*public static boolean moreThanNDependenciesBM(Collection<Object[]> dependencies, int referenceSize) {
 		if (dependencies.size() >= referenceSize) {
 			return true;
 		}
 		return false;
-	}
+	}*/
 
 	public static Set<String> getPackages(DataStructure ds) {
 		Set<String> packages = new HashSet<String>();
@@ -781,5 +815,65 @@ public final class AirpUtil {
 		}
 		return false;
 	}
+	
+	public static boolean checkIfMethodsAreGettersAndSetters(IJavaProject javaProject, final String className, final String methodName) throws JavaModelException, MalformedURLException, ClassNotFoundException {
+		//return true;
+		for (IPackageFragmentRoot folder : javaProject.getAllPackageFragmentRoots()) {
+			if (folder.getKind() == IPackageFragmentRoot.K_SOURCE) {
+				IPath path = folder.getPath();
+				path = path.removeFirstSegments(1);
+				IPath path2 = path;
+
+				if (className.contains("$")) {
+					path2 = path2.append(className.substring(0, className.indexOf('$')).replaceAll("[.]", "" + IPath.SEPARATOR) + ".java");
+				} else {
+					path2 = path2.append(className.replaceAll("[.]", "" + IPath.SEPARATOR) + ".java");
+				}
+
+				IFile file = javaProject.getProject().getFile(path2);
+				if (file.exists()) {
+					String caminho = folder.getResource().getRawLocation().toFile().toURI().toURL().toString();
+					
+					URLClassLoader loader = new URLClassLoader(new URL[] {
+				            new URL(caminho.substring(0, caminho.length()-4)+"bin/")
+				    });
+					
+					Class c = loader.loadClass(className);
+					
+					for (Method method : c.getDeclaredMethods()){
+						if (isGetter(method) || isSetter(method)){
+							if(method.getName().equals(methodName)){
+								return true;
+							}
+						}
+					}
+	
+					
+				}
+			}
+		}
+		return false;
+	}
+	
+	public static boolean isGetter(Method method) {
+		   if (Modifier.isPublic(method.getModifiers()) &&
+		      method.getParameterTypes().length == 0) {
+		         if (method.getName().matches("^get[A-Z].*") &&
+		            !method.getReturnType().equals(void.class))
+		               return true;
+		         if (method.getName().matches("^is[A-Z].*") &&
+		            method.getReturnType().equals(boolean.class))
+		               return true;
+		   }
+		   return false;
+	}
+	
+	public static boolean isSetter(Method method) {
+		   return Modifier.isPublic(method.getModifiers()) &&
+		      method.getReturnType().equals(void.class) &&
+		         method.getParameterTypes().length == 1 &&
+		            method.getName().matches("^set[A-Z].*");
+	}
+	
 }
 

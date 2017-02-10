@@ -159,7 +159,8 @@ public class SuitableModule {
 
 		for (Map.Entry<String, HashMap<String, Collection<? extends Object>>> entry : packagesDependencies.entrySet()) {
 			String respectiveModuleName = entry.getKey();
-			int j=1;
+			int j=0;
+			double mean=0;
 			for (String respectiveClassName : entry.getValue().keySet()) {
 				/*
 				 * If dependencyType is null, the function above will consider all
@@ -184,6 +185,8 @@ public class SuitableModule {
 	
 				}
 				*/
+				mean=mean+(double)(a)/(a+b+c);
+				
 	
 				if(AirpUtil.getPackageFromClassName(classUnderAnalysis).equals(respectiveModuleName)){
 					tipo="Max";
@@ -192,11 +195,14 @@ public class SuitableModule {
 					tipo="Min";
 				}
 				
-				csvdatas.add(new CsvData(i, j, classUnderAnalysis, dependenciesClassUnderAnalysis.toString(), respectiveClassName, respectiveModuleName, dependenciesPackageUnderAnalysis.toString(), a, b, c, d, tipo));
-				
 				j++;
+				csvdatas.add(new CsvData(i, j, classUnderAnalysis, "\""+dependenciesClassUnderAnalysis.toString()+"\"", respectiveClassName, respectiveModuleName, "\""+dependenciesPackageUnderAnalysis.toString()+"\"", a, b, c, d, tipo));
+				
 			}
+			mean=mean/j;
+			csvdatas.add(new CsvData(mean,classUnderAnalysis, respectiveModuleName));
 			i++;
+			
 		}
 		CsvFileWriter.writeCsvFile(csvdatas);
 		return "";
@@ -233,8 +239,9 @@ public class SuitableModule {
 
 		for (Map.Entry<String, HashMap<String, Collection<? extends Object>>> entry : classDependencies.entrySet()) {
 			String respectiveClassName = entry.getKey();
-			
-			int j=1;
+			String respectiveModuleName = AirpUtil.getPackageFromClassName(respectiveClassName);
+			double mean=0;
+			int j=0;
 			for (String respectiveMethodName : entry.getValue().keySet()) {
 				/*
 				 * If dependencyType is null, the function above will consider all
@@ -261,7 +268,7 @@ public class SuitableModule {
 				*/
 				//result2 = result2+"Classe - "+methodUnderAnalysis+" // Pacote - "+respectiveClassName+" ---- A: "+a+" B: "+b+" C: "+c+" D: "+d+System.getProperty("line.separator");
 	
-				String respectiveModuleName = AirpUtil.getPackageFromClassName(respectiveClassName);
+				mean = mean+(double)(a)/(a+b+c);
 				
 				if(expectedClass.equals(respectiveClassName)){
 					tipo="Max";
@@ -269,11 +276,12 @@ public class SuitableModule {
 				else{
 					tipo="Min";
 				}
-				
-				csvdatasMC.add(new CsvDataMC(i,j, methodUnderAnalysis, expectedClass, dependenciesMethodUnderAnalysis.toString(), respectiveMethodName, respectiveClassName, respectiveModuleName, dependenciesClassUnderAnalysis.toString(), lineUnderAnalysis, a, b, c, d, tipo));
-				
 				j++;
+				csvdatasMC.add(new CsvDataMC(i,j, methodUnderAnalysis, expectedClass, "\""+dependenciesMethodUnderAnalysis.toString()+"\"", respectiveMethodName, respectiveClassName, respectiveModuleName, "\""+dependenciesClassUnderAnalysis.toString()+"\"", lineUnderAnalysis, a, b, c, d, tipo));
+				
 			}
+			mean=mean/j;
+			csvdatasMC.add(new CsvDataMC(mean, methodUnderAnalysis, expectedClass, respectiveClassName, respectiveModuleName));
 			i++;
 		}
 		CsvFileWriterMC.writeCsvFileMC(csvdatasMC);
@@ -313,13 +321,15 @@ public class SuitableModule {
 		
 		for (Map.Entry<String, HashMap<String, HashMap<String, Collection<? extends Object>>>> entry : methodDependencies.entrySet()) {
 			String respectiveClassName = entry.getKey();
+			String respectiveModuleName = AirpUtil.getPackageFromClassName(respectiveClassName);
 			
 			for(Map.Entry<String, HashMap<String, Collection<? extends Object>>> entry2 : entry.getValue().entrySet()) {
+				String respectiveMethodName = entry2.getKey();
+				double mean = 0;
 				long j=1;
 				count=false;
 				
 				for(String blockNumber : entry2.getValue().keySet()){
-					String respectiveMethodName = entry2.getKey();
 					
 					
 					if(blockNumber.startsWith(blockUnderAnalysis) && respectiveMethodName.equals(expectedMethod)){
@@ -352,8 +362,8 @@ public class SuitableModule {
 					}
 					*/
 					
-					String respectiveModuleName = AirpUtil.getPackageFromClassName(respectiveClassName);
-					
+					mean = mean+(double)(a)/(a+b+c);
+				
 					//result2 = result2+"Classe - "+blockUnderAnalysis+" // Pacote - "+respectiveClassName+" ---- A: "+a+" B: "+b+" C: "+c+" D: "+d+System.getProperty("line.separator");
 					
 					if(expectedMethod.equals(respectiveMethodName) && expectedClass.equals(respectiveClassName)){
@@ -364,11 +374,15 @@ public class SuitableModule {
 					}
 					dependenciesBlockUnderAnalysis.toString();
 					
-					csvdatasBM.add(new CsvDataBM(i, j, blockUnderAnalysis, expectedMethod, expectedClass, dependenciesBlockUnderAnalysis.toString(), blockNumber, respectiveMethodName, respectiveClassName, respectiveModuleName, dependenciesMethodUnderAnalysis.toString(), lineUnderAnalysis, a, b, c, d, tipo));
+					csvdatasBM.add(new CsvDataBM(i, j, blockUnderAnalysis, expectedMethod, expectedClass, "\""+dependenciesBlockUnderAnalysis.toString()+"\"", blockNumber, respectiveMethodName, respectiveClassName, respectiveModuleName, "\""+dependenciesMethodUnderAnalysis.toString()+"\"", lineUnderAnalysis, a, b, c, d, tipo));
 					
 					j++;
 				}
-				if(count) i++;
+				if(count) {
+					mean=mean/j;
+					csvdatasBM.add(new CsvDataBM(mean, blockUnderAnalysis, expectedMethod, expectedClass, respectiveMethodName, respectiveClassName, respectiveModuleName));
+					i++;
+				}
 			}
 			
 		}

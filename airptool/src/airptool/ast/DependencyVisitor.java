@@ -28,6 +28,7 @@ import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.PrimitiveType;
@@ -691,14 +692,18 @@ public class DependencyVisitor extends ASTVisitor {
 
 	@Override
 	public boolean visit(MethodDeclaration node) {
-		if(!blockIndex.equals("")){
+		if(MC){
 			methodInterFirstBlock=true;
 			interno=true;
 			blocosExternos.add(blockIndex);
 			metodoExterno.add(methodName);
+			
 		}
 		MC=true;
 		methodName=node.getName().getFullyQualifiedName();
+		if(methodName.equals("run")){
+			int x =2;
+		}
 		lineMethod=fullClass.getLineNumber(node.getStartPosition()) - 1;
 		
 		for (Object o : node.parameters()) {
@@ -885,7 +890,7 @@ public class DependencyVisitor extends ASTVisitor {
 	
 	@Override
 	public void endVisit(MethodDeclaration node) {
-		if(!blockIndex.equals("")){
+		if(interno){
 			
 			ASTNode parent = node.getParent();
 			
@@ -1221,10 +1226,10 @@ public class DependencyVisitor extends ASTVisitor {
 	public boolean visit(QualifiedName node) {
 		if ((node.getParent().getNodeType() == ASTNode.METHOD_INVOCATION || node.getParent().getNodeType() == ASTNode.INFIX_EXPRESSION
 				|| node.getParent().getNodeType() == ASTNode.VARIABLE_DECLARATION_FRAGMENT || node.getParent().getNodeType() == ASTNode.ASSIGNMENT)
-				&& node.getQualifier().getNodeType() != ASTNode.QUALIFIED_NAME && node.getQualifier().getNodeType() != ASTNode.SIMPLE_NAME) {
+				//&& node.getQualifier().getNodeType() != ASTNode.QUALIFIED_NAME && node.getQualifier().getNodeType() != ASTNode.SIMPLE_NAME) {
+				&& node.getQualifier().getNodeType() != ASTNode.QUALIFIED_NAME) {
 			ASTNode relevantParent = getRelevantParent(node);
-			// int isStatic = node.resolveBinding().getModifiers() &
-			// Modifier.STATIC;
+			//int isStatic = node.resolveBinding().getModifiers() & Modifier.STATIC;
 
 			switch (relevantParent.getNodeType()) {
 			case ASTNode.METHOD_DECLARATION:

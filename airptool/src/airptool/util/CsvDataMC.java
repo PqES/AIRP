@@ -44,6 +44,25 @@ public class CsvDataMC {
 		this.d = d;
 		this.tipo = tipo;
 	}
+	
+	public CsvDataMC(double mean, String methodAnalyzed, String classAnalyzed, String targetClass, String targetPackage){
+		this.id = 0;
+		this.id2 = 0;
+		this.metodo = methodAnalyzed;
+		this.classe = classAnalyzed;
+		this.pacoteAlvo = targetPackage;
+		this.metodoDaClasse = "-";
+		this.classeAlvo = targetClass;
+		this.depUnder = "-";
+		this.depAlvo = "-";
+		this.linha = 0;
+		this.a = 0;
+		this.b = 0;
+		this.c = 0;
+		this.d = 0;
+		this.tipo = ""+mean;
+	}
+	
 	/**
 	 * @return the id
 	 */

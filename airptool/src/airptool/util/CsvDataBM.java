@@ -49,6 +49,27 @@ public class CsvDataBM {
 		this.d = d;
 		this.tipo = tipo;
 	}
+	
+	public CsvDataBM(double mean, String blockAnalyzed, String methodAnalyzed, String classAnalyzed, String targetMethod, String targetClass, String targetPackage){
+		this.id = 0;
+		this.id2 = 0;
+		this.bloco = blockAnalyzed;
+		this.blocoDoMetodo = "-";
+		this.metodo = methodAnalyzed;
+		this.classe = classAnalyzed;
+		this.metodoAlvo = targetMethod;
+		this.classeAlvo = targetClass;
+		this.pacoteAlvo = targetPackage;
+		this.depUnder = "-";
+		this.depAlvo = "-";
+		this.linha = 0;
+		this.a = 0;
+		this.b = 0;
+		this.c = 0;
+		this.d = 0;
+		this.tipo = ""+mean;
+	}
+	
 	/**
 	 * @return the id
 	 */

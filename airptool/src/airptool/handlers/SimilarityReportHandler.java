@@ -160,10 +160,6 @@ public class SimilarityReportHandler extends AbstractHandler {
 			Map<String, HashMap<String, Collection<? extends Object>>> classDependencies = new HashMap<String, HashMap<String, Collection<? extends Object>>>();
 			Map<String, HashMap<String, HashMap<String,Collection<? extends Object>>>> methodDependencies = new HashMap<String, HashMap<String, HashMap<String, Collection<? extends Object>>>>();
 			
-			Map<String, HashMap<String, Collection<? extends Object>>> classDependenciesInterAbst = new HashMap<String, HashMap<String, Collection<? extends Object>>>();
-			Map<String, HashMap<String, HashMap<String,Collection<? extends Object>>>> methodDependenciesInterAbst = new HashMap<String, HashMap<String, HashMap<String, Collection<? extends Object>>>>();
-			
-			
 			for (Map.Entry<String, HashMap<String, Collection<Object[]>>> entry : packagesDependenciesOriginal.entrySet()) {
 				if(!entry.getKey().toLowerCase().contains("test")){
 					for(Map.Entry<String, Collection<Object[]>> entry2 : entry.getValue().entrySet()){
@@ -209,16 +205,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 											}
 											methodDependencies.get(entry.getKey()).get(entry2.getKey()).put(entry3.getKey(),
 														new HashSet<Object>(Collections2.transform(entry3.getValue(), function)));
-										}else {
-											if(!methodDependenciesInterAbst.containsKey(entry.getKey())){
-												methodDependenciesInterAbst.put(entry.getKey(), new HashMap<String, HashMap<String, Collection<? extends Object>>>());
-											}
-											if(!methodDependenciesInterAbst.get(entry.getKey()).containsKey(entry2.getKey())){
-												methodDependenciesInterAbst.get(entry.getKey()).put(entry2.getKey(), new HashMap<String, Collection<? extends Object>>());
-											}
-											methodDependenciesInterAbst.get(entry.getKey()).get(entry2.getKey()).put(entry3.getKey(),
-														new HashSet<Object>(Collections2.transform(entry3.getValue(), function)));
-										}
+										}	
 									} else {
 										if(AirpUtil.checkIfIsNotInterface(javaProject, entry.getKey())){
 											if(!methodDependencies.containsKey(entry.getKey())){
@@ -228,15 +215,6 @@ public class SimilarityReportHandler extends AbstractHandler {
 												methodDependencies.get(entry.getKey()).put(entry2.getKey(), new HashMap<String, Collection<? extends Object>>());
 											}
 											methodDependencies.get(entry.getKey()).get(entry2.getKey()).put(entry3.getKey(),
-													Collections2.transform(entry3.getValue(), function));
-										}else{
-											if(!methodDependenciesInterAbst.containsKey(entry.getKey())){
-												methodDependenciesInterAbst.put(entry.getKey(), new HashMap<String, HashMap<String, Collection<? extends Object>>>());
-											}
-											if(!methodDependenciesInterAbst.get(entry.getKey()).containsKey(entry2.getKey())){
-												methodDependenciesInterAbst.get(entry.getKey()).put(entry2.getKey(), new HashMap<String, Collection<? extends Object>>());
-											}
-											methodDependenciesInterAbst.get(entry.getKey()).get(entry2.getKey()).put(entry3.getKey(),
 													Collections2.transform(entry3.getValue(), function));
 										}
 									}
@@ -259,33 +237,46 @@ public class SimilarityReportHandler extends AbstractHandler {
 					
 					String pkg = AirpUtil.getPackageFromClassName(expectedClass);
 					String pkgclass = pkg+"."+expectedClass;
+					String blockNum= "";
 					int lineUnderAnalysis=0;
 					for(Object[] obj: entryBM.getValue()){
-						
+						blockNum = obj[3].toString();
 						lineUnderAnalysis = Integer.parseInt(obj[5].toString());
 					}
 					
 					if (pkgclass.toLowerCase().contains("test")) {
-						//outLog.println("ignored (test file).");
+						System.out.println("Block "+blockNum+" from method "+expectedMethod+" in class "+expectedClass+" was ignored (test class).");
 						//salvaBM=false;
 						continue;
 					}
 					
+					if(!AirpUtil.checkIfIsNotInterface(javaProject, expectedClass)){
+						System.out.println("Block "+blockNum+" from method "+expectedMethod+" in class "+expectedClass+" was ignored (method from Interface)");
+						//salvaBM=false;
+						continue;
+					}
+					
+					if(expectedClass.toLowerCase().endsWith(expectedMethod.toLowerCase())){
+						System.out.println("Block "+blockNum+" from method "+expectedMethod+" in class "+expectedClass+" was ignored (Constructor Method)");
+						continue;
+					}
+					
+					
 					if (entryBM.getValue().isEmpty()) {
-						//outLog.println("ignored (there are no method dependencies).");
+						System.out.println("Block "+blockNum+" from method "+expectedMethod+" in class "+expectedClass+" was ignored (there are no dependencies).");
 						//salvaBM=false;
 						continue;
 					}
 
 					if (!AirpUtil.moreThanNDependencies(entryBM.getValue(), 3)) {
-						//outLog.println("ignored (uses less than 5 types).");
+						System.out.println("Block "+blockNum+" from method "+expectedMethod+" in class "+expectedClass+" was ignored (uses less than 3 types).");
 						//salvaBM=false;
 
 						continue;
 					}
 					
-					if (AirpUtil.isAloneInItsMethod(blocos, expectedMethod, expectedClass)) {
-						//outLog.println("ignored (lonely).");
+					if (AirpUtil.isAloneInItsMethod(depBM)) {
+						System.out.println("Block "+blockNum+" from method "+expectedMethod+" in class "+expectedClass+" was ignored (less than 3 blocks in the respective method).");
 						//salvaBM=false;
 						continue;
 					}
@@ -382,9 +373,6 @@ public class SimilarityReportHandler extends AbstractHandler {
 							if(AirpUtil.checkIfIsNotInterface(javaProject, expectedClass)){
 								StringBuilder s= SuitableModule.calculateAllBM(ds, expectedClass, entryBM.getKey(), expectedMethod, dependenciesBlockUnderAnalysis,
 									methodDependencies, universeOfDependencies, lineUnderAnalysis);
-							} else{
-								StringBuilder s= SuitableModule.calculateAllBM(ds, expectedClass, entryBM.getKey(), expectedMethod, dependenciesBlockUnderAnalysis,
-										methodDependenciesInterAbst, universeOfDependencies, lineUnderAnalysis);
 							}
 					
 							
@@ -399,10 +387,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 							if(AirpUtil.checkIfIsNotInterface(javaProject, expectedClass)){
 								StringBuilder s= SuitableModule.calculateAllBM(ds, expectedClass, entryBM.getKey(), expectedMethod, new HashSet<Object>(
 									dependenciesBlockUnderAnalysis), methodDependencies, new HashSet<Object>(universeOfDependencies), lineUnderAnalysis);
-							} else {
-								StringBuilder s= SuitableModule.calculateAllBM(ds, expectedClass, entryBM.getKey(), expectedMethod, new HashSet<Object>(
-										dependenciesBlockUnderAnalysis), methodDependenciesInterAbst, new HashSet<Object>(universeOfDependencies), lineUnderAnalysis);
-							}
+							} 
 						}
 					
 
@@ -461,14 +446,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 										
 										classDependencies.get(entry.getKey()).put(entry2.getKey(),
 											new HashSet<Object>(Collections2.transform(classDependenciesOriginal.get(entry.getKey()).get(entry2.getKey()), function)));
-									} else{
-										if(!classDependenciesInterAbst.containsKey(entry.getKey())){
-											classDependenciesInterAbst.put(entry.getKey(), new HashMap<String, Collection<? extends Object>>());
-										}
-										
-										classDependenciesInterAbst.get(entry.getKey()).put(entry2.getKey(),
-											new HashSet<Object>(Collections2.transform(classDependenciesOriginal.get(entry.getKey()).get(entry2.getKey()), function)));
-									} 
+									}  
 								} else {
 									if(AirpUtil.checkIfIsNotInterface(javaProject, entry.getKey())){
 										if(!classDependencies.containsKey(entry.getKey())){
@@ -476,14 +454,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 										}
 										
 										classDependencies.get(entry.getKey()).put(entry2.getKey(), Collections2.transform(classDependenciesOriginal.get(entry.getKey()).get(entry2.getKey()), function));
-									} else{
-										if(!classDependenciesInterAbst.containsKey(entry.getKey())){
-											classDependenciesInterAbst.put(entry.getKey(), new HashMap<String, Collection<? extends Object>>());
-										}
-										
-										classDependenciesInterAbst.get(entry.getKey()).put(entry2.getKey(), Collections2.transform(classDependenciesOriginal.get(entry.getKey()).get(entry2.getKey()), function));
-										
-									}
+									} 
 								}
 							}
 						}
@@ -504,31 +475,38 @@ public class SimilarityReportHandler extends AbstractHandler {
 							lineUnderAnalysis = Integer.parseInt(obj[4].toString());
 						}
 					
-						if(expectedClass.toLowerCase().endsWith(entryMC.getKey().toLowerCase())){
-							continue;
-						}
+					if(expectedClass.toLowerCase().endsWith(entryMC.getKey().toLowerCase())){
+						System.out.println("Method "+entryMC.getKey()+" in class "+expectedClass+" was ignored (Constructor Method)");
+						continue;
+					}
 					
 					if (pkgclass.toLowerCase().contains("test")) {
-						//outLog.println("ignored (test file).");
+						System.out.println("Method "+entryMC.getKey()+" in class "+expectedClass+" was ignored (test class)");
+						//salvaMC=false;
+						continue;
+					}
+					
+					if(!AirpUtil.checkIfIsNotInterface(javaProject, expectedClass)){
+						System.out.println("Method "+entryMC.getKey()+" in class "+expectedClass+" was ignored (method from Interface)");
 						//salvaMC=false;
 						continue;
 					}
 					
 					if (entryMC.getValue().isEmpty()) {
-						//outLog.println("ignored (there are no method dependencies).");
+						System.out.println("Method "+entryMC.getKey()+" in class "+expectedClass+" was ignored (there are no method dependencies)");
 						//salvaMC=false;
 						continue;
 					}
 	
 					
 					if (!AirpUtil.moreThanNDependencies(entryMC.getValue(), 3)) {
-							//outLog.println("ignored (uses less than 3 types).");
+						System.out.println("Method "+entryMC.getKey()+" in class "+expectedClass+" was ignored (uses less than 3 types)");
 							//salvaMC=false;
 							continue;
 						}
 					
-					if (AirpUtil.isAloneInItsClass(methods, expectedClass)) {
-						//outLog.println("ignored (lonely).");
+					if (AirpUtil.isAloneInItsClass(ds.getDependenciesMC(expectedClass), expectedClass)) {
+						System.out.println("Method "+entryMC.getKey()+" in class "+expectedClass+" was ignored (less than 3 methods in the respective class)");
 						//salvaMC=false;
 						continue;
 					}
@@ -610,10 +588,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 							if(AirpUtil.checkIfIsNotInterface(javaProject, expectedClass)){
 								StringBuilder b = SuitableModule.calculateAllMC(ds, entryMC.getKey(), expectedClass, dependenciesMethodUnderAnalysis,
 									classDependencies, universeOfDependencies, lineUnderAnalysis);
-							} else{
-								StringBuilder b = SuitableModule.calculateAllMC(ds, entryMC.getKey(), expectedClass, dependenciesMethodUnderAnalysis,
-										classDependenciesInterAbst, universeOfDependencies, lineUnderAnalysis);
-							}
+							} 
 							
 						} else {
 							// It is not linked with the original list (because HashSet)
@@ -621,10 +596,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 							if(AirpUtil.checkIfIsNotInterface(javaProject, expectedClass)){
 								StringBuilder b = SuitableModule.calculateAllMC(ds, entryMC.getKey(), expectedClass, new HashSet<Object>(
 									dependenciesMethodUnderAnalysis), classDependencies, new HashSet<Object>(universeOfDependencies), lineUnderAnalysis);
-							} else{
-								StringBuilder b = SuitableModule.calculateAllMC(ds, entryMC.getKey(), expectedClass, new HashSet<Object>(
-										dependenciesMethodUnderAnalysis), classDependenciesInterAbst, new HashSet<Object>(universeOfDependencies), lineUnderAnalysis);
-							}
+							} 
 						}
 		
 						// Put it back after
@@ -642,7 +614,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 				String pkgclass = expectedModule+"."+classUnderAnalysis;
 				
 				if (pkgclass.toLowerCase().contains("test")) {
-					//outLog.println("ignored (test file).");
+					System.out.println("Class "+classUnderAnalysis+" from "+expectedModule+" was ignored (test class).");
 					//salvaCP=false;
 					continue;
 				}
@@ -650,19 +622,19 @@ public class SimilarityReportHandler extends AbstractHandler {
 				
 				// It may be redundant because the next if statement
 				if (ds.getDependenciesCP(classUnderAnalysis).isEmpty()) {
-					//outLog.println("ignored (there are no class dependencies).");
+					System.out.println("Class "+classUnderAnalysis+" from "+expectedModule+" was ignored (there are no class dependencies).");
 					//salvaCP=false;
 					continue;
 				}
 
 				if (!AirpUtil.moreThanNDependencies(ds.getDependenciesCP(classUnderAnalysis), 3)) {
-					//outLog.println("ignored (uses less than 3 types).");
+					System.out.println("Class "+classUnderAnalysis+" from "+expectedModule+" was ignored (uses less than 3 types).");
 					//salvaCP=false;
 					continue;
 				}
 				
-				if (AirpUtil.isAloneInItsPackage(javaProject, classUnderAnalysis)) {
-					//outLog.println("ignored (lonely).");
+				if (AirpUtil.isAloneInItsPackage(ds, classUnderAnalysis, expectedModule, classes)) {
+					System.out.println("Class "+classUnderAnalysis+" from "+expectedModule+" was ignored (less than 3 classes in the respective package).");
 					//salvaCP=false;
 					continue;
 				}

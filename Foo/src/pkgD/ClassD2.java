@@ -11,13 +11,13 @@ import java.awt.*;
 import java.awt.event.*;
  
 /* Framework.java requires no other files. */
-public class ClassD extends WindowAdapter {
+public class ClassD2 extends WindowAdapter {
     public int numWindows = 0;
     private Point lastLocation = null;
     private int maxX = 500;
     private int maxY = 500;
  
-    public ClassD() {
+    public ClassD2() {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         maxX = screenSize.width - 50;
         maxY = screenSize.height - 50;
@@ -88,7 +88,7 @@ public class ClassD extends WindowAdapter {
      * event-dispatching thread.
      */
     private static void createAndShowGUI() {
-        ClassD framework = new ClassD();
+        ClassD2 framework = new ClassD2();
     }
  
     public static void main(String[] args) {
@@ -104,9 +104,9 @@ public class ClassD extends WindowAdapter {
  
     class MyFrame extends JFrame {
         protected Dimension defaultSize = new Dimension(200, 200);
-        protected ClassD framework = null;
+        protected ClassD2 framework = null;
  
-        public MyFrame(ClassD controller) {
+        public MyFrame(ClassD2 controller) {
             super("New Frame");
             framework = controller;
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
