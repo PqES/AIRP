@@ -12,6 +12,9 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+
 import javax.swing.JOptionPane;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -63,7 +66,7 @@ public class RefactoringViewMC extends ViewPart {
 		parent.setLayout(layout);
 		viewer = new TableViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
 
-		String[] titles = { "Classe_Origem", "Pacote_Destino", "Melhora" };
+		String[] titles = { "Source Class", "Target Package", "Upgrade" };
 		int[] bounds = { 200, 200, 200 };
 
 		TableViewerColumn col = createTableViewerColumn(titles[0], bounds[0], 0);
@@ -89,7 +92,7 @@ public class RefactoringViewMC extends ViewPart {
 			@Override
 			public String getText(Object element) {
 				DadosView dv = (DadosView) element;
-				return dv.getFx()+"";
+				return new DecimalFormat("##.##").format(dv.getFx());
 			}
 		});
 
@@ -101,7 +104,12 @@ public class RefactoringViewMC extends ViewPart {
 
 		viewer.setContentProvider(ArrayContentProvider.getInstance());
 
-		viewer.setInput(SimilarityReportHandler.recTabMC);
+		DadosView v = SimilarityReportHandler.recTabMC.get(1);
+		ArrayList<DadosView> t = new ArrayList<DadosView>();
+		t.add(v);
+		
+		//viewer.setInput(SimilarityReportHandler.recTabMC);
+		viewer.setInput(t);
 		getSite().setSelectionProvider(viewer);
 
 		GridData gridData = new GridData();

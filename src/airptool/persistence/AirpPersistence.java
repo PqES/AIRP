@@ -77,5 +77,9 @@ public final class AirpPersistence {
 	public static boolean existsFolder(final IProject project) {
 		return project.getFolder(DATA_FOLDER).exists();
 	}
+	
+	public static IFolder getFolder(final IProject project) {
+		return project.getFolder(DATA_FOLDER);
+	}
 
 }

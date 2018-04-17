@@ -12,6 +12,8 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 
+import java.text.DecimalFormat;
+
 import javax.swing.JOptionPane;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -63,7 +65,7 @@ public class RefactoringViewMM extends ViewPart {
 		parent.setLayout(layout);
 		viewer = new TableViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
 
-		String[] titles = { "Classe_Origem", "Método_Origem", "Classe_Destino", "Melhora"  };
+		String[] titles = { "Source Class", "Source Method", "Target Class", "Upgrade"  };
 		int[] bounds = { 150, 150, 150, 150 };
 
 		TableViewerColumn col = createTableViewerColumn(titles[0], bounds[0], 0);
@@ -80,7 +82,7 @@ public class RefactoringViewMM extends ViewPart {
 			@Override
 			public String getText(Object element) {
 				DadosView dv = (DadosView) element;
-				return dv.getMet_ori();
+				return dv.getMet_ori()+"()";
 			}
 		});
 		
@@ -98,7 +100,7 @@ public class RefactoringViewMM extends ViewPart {
 			@Override
 			public String getText(Object element) {
 				DadosView dv = (DadosView) element;
-				return dv.getFx()+"";
+				return new DecimalFormat("##.##").format(dv.getFx());
 			}
 		});
 

@@ -63,7 +63,7 @@ public class RefactoringViewEM extends ViewPart {
 		parent.setLayout(layout);
 		viewer = new TableViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
 
-		String[] titles = { "Classe_Origem", "Método_Origem", "Bloco_Origem", "Melhora"  };
+		String[] titles = { "Source Class", "Source Method", "Source Block", "Similarity Upgrade"  };
 		int[] bounds = { 150, 150, 150, 150 };
 
 		TableViewerColumn col = createTableViewerColumn(titles[0], bounds[0], 0);
@@ -80,7 +80,7 @@ public class RefactoringViewEM extends ViewPart {
 			@Override
 			public String getText(Object element) {
 				DadosView dv = (DadosView) element;
-				return dv.getMet_ori();
+				return dv.getMet_ori()+"()";
 			}
 		});
 		

@@ -143,6 +143,13 @@
                id="airptool.views.RefactoringViewEM"
                name="RefactoringView EM">
          </view>
+         <view
+               category="airptool"
+               class="airptool.views.RecGraph"
+               icon="icons/sample.gif"
+               id="airptool.views.RecGraph"
+               name="Recommendation Graph">
+         </view>
       </extension>
       <extension
             point="org.eclipse.ui.perspectiveExtensions">

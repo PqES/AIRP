@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import airptool.persistence.AirpPersistence;
+
 
 public class CsvFileWriter {
 	
@@ -21,7 +23,7 @@ public class CsvFileWriter {
 	//	csvdatas.addAll(csvdata);
 	//}
 	
-	public static void writeCsvFile(List<CsvData> csvdata, String projectName) {
+	public static void writeCsvFile(List<CsvData> csvdata, String projectName, String projectPath) {
 		
 		//Create new students objects
 		/*
@@ -47,7 +49,7 @@ public class CsvFileWriter {
 		FileWriter fileWriter = null;
 				
 		try {
-			fileWriter = new FileWriter(AirpUtil.TEMP_FOLDER + "/"+projectName+"CP.csv", true);
+			fileWriter = new FileWriter(projectPath+"/"+projectName+"CP.csv", true);
 
 			//Write the CSV file header
 			//fileWriter.append(FILE_HEADER.toString());

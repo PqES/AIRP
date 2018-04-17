@@ -19,6 +19,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+
+import javax.swing.JOptionPane;
+
 import java.util.HashMap;
 
 import org.eclipse.core.commands.AbstractHandler;
@@ -44,7 +47,6 @@ import airptool.Activator;
 import airptool.core.DataStructure;
 import airptool.core.SuitableModule;
 import airptool.enums.DependencyType;
-import airptool.jung.NewWindow;
 import airptool.persistence.AirpPersistence;
 import airptool.util.AirpUtil;
 import airptool.util.CsvFileWriter;
@@ -52,6 +54,7 @@ import airptool.util.CsvFileWriterBM;
 import airptool.util.CsvFileWriterMC;
 import airptool.util.DataStructureUtils;
 import airptool.util.DateUtil;
+import airptool.zest.ZestGraph;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
@@ -98,11 +101,6 @@ public class SimilarityReportHandler extends AbstractHandler {
 			dialog.setMessage("Which projects would you like to analyze? (it has to be opened and Airp enabled)");
 			// dialog.setInitialSelections(new String[] { "[T]" });
 
-			// TODO: acho que aqui ele ta pegando todos os projetos que etao
-			// abertos
-			// ver se nao eh melhor mudar pro cara escolher
-			// tem que ver se o fato disso ser um Handler, o que est fazendo est
-			// certo e eu deveria mexer em outro lugar
 
 			LinkedList<IProject> airpEnabledProjects = new LinkedList<IProject>();
 			for (IProject project : root.getProjects()) {
@@ -123,20 +121,24 @@ public class SimilarityReportHandler extends AbstractHandler {
 				IProject project = (IProject) o;
 				
 				boolean existe = false;
+				int reanalyze=1;
 				
-				File f = new File(AirpUtil.TEMP_FOLDER+"/"+project.getName()+"BM.csv");
+				File f = new File(AirpPersistence.getFolder(project).getLocation().toString()+"/"+project.getName()+"MC.csv");
 				if(f.exists() && !f.isDirectory()) { 
-				    f = new File(AirpUtil.TEMP_FOLDER+"/"+project.getName()+"MC.csv");
+				    f = new File(AirpPersistence.getFolder(project).getLocation().toString()+"/"+project.getName()+"MC.csv");
 				    if(f.exists() && !f.isDirectory()) {
-				    	f = new File(AirpUtil.TEMP_FOLDER+"/"+project.getName()+"CP.csv");
+				    	f = new File(AirpPersistence.getFolder(project).getLocation().toString()+"/"+project.getName()+"CP.csv");
 					    if(f.exists() && !f.isDirectory()) {
 					    	existe=true;
 					    }
 				    }
 				}
 				
-				if(!existe){
+				if(existe){
+					reanalyze = JOptionPane.showConfirmDialog(null,"The project has already been previously analyzed. Do you want to reanalyze it?? ","Reanalyze",JOptionPane.YES_NO_CANCEL_OPTION);
+				}
 				
+				if(reanalyze == JOptionPane.YES_OPTION) {
 				IJavaProject javaProject = JavaCore.create(project);
 				DataStructure ds = this.init(project);
 
@@ -167,7 +169,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 				System.gc();
 				}
 				
-				CalcRec cr = new CalcRec();
+				CalcRec cr = new CalcRec(project);
 				HashSet<DadosView> tempTab = cr.getTab();
 				
 				for(DadosView dv : tempTab){
@@ -186,23 +188,23 @@ public class SimilarityReportHandler extends AbstractHandler {
 
 			        public int compare(Object o1, Object o2) {
 
-			            String x1 = ((DadosView) o1).getPkg_ori();
-			            String x2 = ((DadosView) o2).getPkg_ori();
-			            int comp1 = x1.compareTo(x2);
+			            Double d1 = ((DadosView) o1).getFx();
+			            Double d2 = ((DadosView) o2).getFx();
+			            int comp1 = d1.compareTo(d2);
 
 			            if (comp1 != 0) {
 			               return comp1;
 			            } else {
-			            	x1 = ((DadosView) o1).getClss_ori();
-				            x2 = ((DadosView) o2).getClss_ori();
+			            		String x1 = ((DadosView) o1).getPkg_ori();
+				            String x2 = ((DadosView) o2).getPkg_ori();
 				            int comp2 = x1.compareTo(x2);
 
 				            if (comp2 != 0) {
 				               return comp2;
 				            } else {
-				               Double d1 = ((DadosView) o1).getFx();
-				               Double d2 = ((DadosView) o2).getFx();
-				               return d1.compareTo(d2);
+				               x1 = ((DadosView) o1).getClss_ori();
+				               x2 = ((DadosView) o2).getClss_ori();
+				               return x1.compareTo(x2);
 				            }
 			            }
 			    }});
@@ -211,30 +213,30 @@ public class SimilarityReportHandler extends AbstractHandler {
 
 			        public int compare(Object o1, Object o2) {
 
-			            String x1 = ((DadosView) o1).getPkg_ori();
-			            String x2 = ((DadosView) o2).getPkg_ori();
-			            int comp1 = x1.compareTo(x2);
+			            Double d1 = ((DadosView) o1).getFx();
+			            Double d2 = ((DadosView) o2).getFx();
+			            int comp1 = d1.compareTo(d2);
 
 			            if (comp1 != 0) {
 			               return comp1;
 			            } else {
-			            	x1 = ((DadosView) o1).getClss_ori();
-				            x2 = ((DadosView) o2).getClss_ori();
+			            		String x1 = ((DadosView) o1).getPkg_ori();
+				            String x2 = ((DadosView) o2).getPkg_ori();
 				            int comp2 = x1.compareTo(x2);
 
 				            if (comp2 != 0) {
 				               return comp2;
 				            } else {
-				            	x1 = ((DadosView) o1).getMet_ori();
-					            x2 = ((DadosView) o2).getMet_ori();
+				            	x1 = ((DadosView) o1).getClss_ori();
+					            x2 = ((DadosView) o2).getClss_ori();
 					            int comp3 = x1.compareTo(x2);
 
 					            if (comp3 != 0) {
 					               return comp3;
 					            } else {
-					               Double d1 = ((DadosView) o1).getFx();
-					               Double d2 = ((DadosView) o2).getFx();
-					               return d1.compareTo(d2);
+					               x1 = ((DadosView) o1).getMet_ori();
+					               x2 = ((DadosView) o2).getMet_ori();
+					               return x1.compareTo(x2);
 					            }
 				            }
 			            }
@@ -244,45 +246,48 @@ public class SimilarityReportHandler extends AbstractHandler {
 
 			        public int compare(Object o1, Object o2) {
 
-			            String x1 = ((DadosView) o1).getPkg_ori();
-			            String x2 = ((DadosView) o2).getPkg_ori();
-			            int comp1 = x1.compareTo(x2);
+			            Double d1 = ((DadosView) o1).getFx();
+			            Double d2 = ((DadosView) o2).getFx();
+			            int comp1 = d1.compareTo(d2);
 
 			            if (comp1 != 0) {
 			               return comp1;
 			            } else {
-			            	x1 = ((DadosView) o1).getClss_ori();
-				            x2 = ((DadosView) o2).getClss_ori();
+			            	String x1 = ((DadosView) o1).getPkg_ori();
+				            String x2 = ((DadosView) o2).getPkg_ori();
 				            int comp2 = x1.compareTo(x2);
 
 				            if (comp2 != 0) {
 				               return comp2;
 				            } else {
-				            	x1 = ((DadosView) o1).getMet_ori();
-					            x2 = ((DadosView) o2).getMet_ori();
+				            	x1 = ((DadosView) o1).getClss_ori();
+					            x2 = ((DadosView) o2).getClss_ori();
 					            int comp3 = x1.compareTo(x2);
 
 					            if (comp3 != 0) {
 					               return comp3;
 					            } else {
-					            	x1 = ((DadosView) o1).getBlo_ori();
-						            x2 = ((DadosView) o2).getBlo_ori();
+					            	x1 = ((DadosView) o1).getMet_ori();
+						            x2 = ((DadosView) o2).getMet_ori();
 						            int comp4 = x1.compareTo(x2);
 
 						            if (comp4 != 0) {
 						               return comp4;
 						            } else {
-						               Double d1 = ((DadosView) o1).getFx();
-						               Double d2 = ((DadosView) o2).getFx();
-						               return d1.compareTo(d2);
+						               x1 = ((DadosView) o1).getBlo_ori();
+						               x2 = ((DadosView) o2).getBlo_ori();
+						               return x1.compareTo(x2);
 						            }
 					            }
 				            }
 			            }
 			    }});
 				
+				//IJavaProject javaProject2 = JavaCore.create(project);
+				//DataStructure ds2 = this.init(project);
+				//ZestGraph rc = new ZestGraph();
+				//NestedGraphSnippet2 t = new NestedGraphSnippet2();
 				openView();
-				NewWindow nw = new NewWindow();
 				
 			}
 		} catch (Throwable t) {
@@ -620,7 +625,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 												methodName + "WithNoExtract", expectedClass,
 												dependenciesMethodWithNoExtractUnderAnalysis,
 												classDependencies.get(className), universeOfDependencies,
-												"", "Max", className);
+												"", "Max", className, project);
 
 									} else {
 										StringBuilder s = SuitableModule.calculateAllBM(ds,
@@ -628,7 +633,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 												new HashSet<Object>(dependenciesMethodWithNoExtractUnderAnalysis),
 												classDependencies.get(className),
 												new HashSet<Object>(universeOfDependencies), "", "Max",
-												className);
+												className, project);
 
 									}
 
@@ -665,7 +670,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 										StringBuilder s = SuitableModule.calculateAllBM(ds, methodName + "WithExtract",
 												expectedClass, dependenciesMethodWithExtractUnderAnalysis,
 												classDependencies.get(className), universeOfDependencies,
-												blockNum, "Min", className);
+												blockNum, "Min", className, project);
 
 									} else {
 										// It is not linked with the original
@@ -676,7 +681,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 												new HashSet<Object>(dependenciesMethodWithExtractUnderAnalysis),
 												classDependencies.get(className),
 												new HashSet<Object>(universeOfDependencies), blockNum, "Min",
-												className);
+												className, project);
 
 									}
 
@@ -794,7 +799,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 
 						StringBuilder b = SuitableModule.calculateAllMC(ds, entryMC.getKey(), expectedClass,
 								dependenciesMethodUnderAnalysis, classDependencies, universeOfDependencies,
-								lineUnderAnalysis);
+								lineUnderAnalysis, project);
 						
 					} else {
 						// It is not linked with the original list (because
@@ -802,7 +807,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 
 						StringBuilder b = SuitableModule.calculateAllMC(ds, entryMC.getKey(), expectedClass,
 								new HashSet<Object>(dependenciesMethodUnderAnalysis), classDependencies,
-								new HashSet<Object>(universeOfDependencies), lineUnderAnalysis);
+								new HashSet<Object>(universeOfDependencies), lineUnderAnalysis, project);
 						
 					}
 
@@ -872,13 +877,13 @@ public class SimilarityReportHandler extends AbstractHandler {
 			if (!set) {
 
 				StringBuilder s = SuitableModule.calculateAll(ds, classUnderAnalysis, expectedModule,
-						dependenciesClassUnderAnalysis, packagesDependencies, universeOfDependencies);
+						dependenciesClassUnderAnalysis, packagesDependencies, universeOfDependencies, project);
 				
 			} else {
 				// It is not linked with the original list (because HashSet)
 				StringBuilder s = SuitableModule.calculateAll(ds, classUnderAnalysis, expectedModule,
 						new HashSet<Object>(dependenciesClassUnderAnalysis), packagesDependencies,
-						new HashSet<Object>(universeOfDependencies));
+						new HashSet<Object>(universeOfDependencies), project);
 				
 			}
 
@@ -933,9 +938,11 @@ public class SimilarityReportHandler extends AbstractHandler {
 		IViewPart myView1 = wp.findView("airptool.views.RefactoringViewMC");
 		IViewPart myView2 = wp.findView("airptool.views.RefactoringViewMM");
 		IViewPart myView3 = wp.findView("airptool.views.RefactoringViewEM");
+		IViewPart myView4 = wp.findView("airptool.views.RecGraph");
 		wp.hideView(myView1);
 		wp.hideView(myView2);
 		wp.hideView(myView3);
+		wp.hideView(myView4);
 	}
 
 	private void openView() {
@@ -943,6 +950,7 @@ public class SimilarityReportHandler extends AbstractHandler {
 			PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView("airptool.views.RefactoringViewMC");
 			PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView("airptool.views.RefactoringViewMM");
 			PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView("airptool.views.RefactoringViewEM");
+			PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView("airptool.views.RecGraph");
 		} catch (PartInitException e) {
 			e.printStackTrace();
 		}

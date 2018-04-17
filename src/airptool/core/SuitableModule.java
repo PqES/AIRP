@@ -13,6 +13,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.eclipse.core.resources.IProject;
 
 import airptool.core.coefficients.BaroniUrbaniCoefficientStrategy;
 import airptool.core.coefficients.DotProductCoefficientStrategy;
@@ -34,6 +35,7 @@ import airptool.core.coefficients.SokalSneathCoefficientStrategy;
 import airptool.core.coefficients.SorensonCoefficientStrategy;
 import airptool.core.coefficients.YuleCoefficientStrategy;
 import airptool.enums.DependencyType;
+import airptool.persistence.AirpPersistence;
 import airptool.util.AirpUtil;
 import airptool.util.CsvData;
 import airptool.util.CsvDataBM;
@@ -58,14 +60,14 @@ public class SuitableModule {
 
 	public static StringBuilder calculateAll(final DataStructure ds, final String classUnderAnalysis, final String expectedModule,
 			final Collection<? extends Object> dependenciesClassUnderAnalysis, final Map<String, HashMap<String, Collection<? extends Object>>> packagesDependencies,
-			final Collection<? extends Object> universeOfDependencies) {
+			final Collection<? extends Object> universeOfDependencies, final IProject project) {
 		StringBuilder resume = new StringBuilder();
 		//resume.append("Class Under Analysis: "+classUnderAnalysis+ "\t");
 
 		//TODO: antes (primeira linha):Map<Class<? extends ICoefficientStrategy>, Set<Object[]>> suitableModulesByCoefficient = calculate(ds, classUnderAnalysis,
 		
 		String suitableModulesByCoefficient = calculate(ds, classUnderAnalysis,
-				coefficientStrategies, dependenciesClassUnderAnalysis, packagesDependencies, universeOfDependencies);
+				coefficientStrategies, dependenciesClassUnderAnalysis, packagesDependencies, universeOfDependencies, project);
 		
 		//TODO: descomentar
 		/*for (ICoefficientStrategy cs : coefficientStrategies) {
@@ -102,11 +104,11 @@ public class SuitableModule {
 	
 	public static StringBuilder calculateAllBM(final DataStructure ds, String methodUnderAnalysis, final String expectedClass,
 			final Collection<? extends Object> dependenciesMethodUnderAnalysis, final Map<String, Collection<? extends Object>> classDependencies,
-			final Collection<? extends Object> universeOfDependencies, String blockNum, String tipo, String className) {
+			final Collection<? extends Object> universeOfDependencies, String blockNum, String tipo, String className, final IProject project) {
 		StringBuilder resume = new StringBuilder();
 		
 		String suitableModulesByCoefficient = calculateBM(ds, expectedClass, methodUnderAnalysis,
-				coefficientStrategies, dependenciesMethodUnderAnalysis, classDependencies, universeOfDependencies, blockNum, tipo, className);
+				coefficientStrategies, dependenciesMethodUnderAnalysis, classDependencies, universeOfDependencies, blockNum, tipo, className, project);
 		
 		resume.append(suitableModulesByCoefficient+System.getProperty("line.separator"));
 		
@@ -115,11 +117,11 @@ public class SuitableModule {
 	
 	public static StringBuilder calculateAllMC(final DataStructure ds, String methodUnderAnalysis, final String expectedClass,
 			final Collection<? extends Object> dependenciesMethodUnderAnalysis, final Map<String, HashMap<String, Collection<? extends Object>>> classDependencies,
-			final Collection<? extends Object> universeOfDependencies, int lineUnderAnalysis) {
+			final Collection<? extends Object> universeOfDependencies, final int lineUnderAnalysis, final IProject project) {
 		StringBuilder resume = new StringBuilder();
 		
 		String suitableModulesByCoefficient = calculateMC(ds, expectedClass, methodUnderAnalysis,
-				coefficientStrategies, dependenciesMethodUnderAnalysis, classDependencies, universeOfDependencies, lineUnderAnalysis);
+				coefficientStrategies, dependenciesMethodUnderAnalysis, classDependencies, universeOfDependencies, lineUnderAnalysis, project);
 		
 		resume.append(suitableModulesByCoefficient+System.getProperty("line.separator"));
 		
@@ -131,7 +133,7 @@ public class SuitableModule {
 	private static String calculate(final DataStructure ds,
 			final String classUnderAnalysis, final ICoefficientStrategy[] coefficientStrategies,
 			final Collection<? extends Object> dependenciesClassUnderAnalysis, final Map<String, HashMap<String, Collection<? extends Object>>> packagesDependencies,
-			final Collection<? extends Object> universeOfDependencies) {
+			final Collection<? extends Object> universeOfDependencies, final IProject project) {
 
 		String tipo = "";
 		List<CsvData> csvdatas = new ArrayList<CsvData>();
@@ -204,14 +206,14 @@ public class SuitableModule {
 			i++;
 			
 		}
-		CsvFileWriter.writeCsvFile(csvdatas, ds.getProjectName());
+		CsvFileWriter.writeCsvFile(csvdatas, ds.getProjectName(), AirpPersistence.getFolder(project).getLocation().toString());
 		return "";
 	}
 	
 	private static String calculateMC(final DataStructure ds, String expectedClass,
 			final String methodUnderAnalysis, final ICoefficientStrategy[] coefficientStrategies,
 			final Collection<? extends Object> dependenciesMethodUnderAnalysis, final Map<String, HashMap<String, Collection<? extends Object>>> classDependencies,
-			final Collection<? extends Object> universeOfDependencies, int lineUnderAnalysis) {
+			final Collection<? extends Object> universeOfDependencies, final int lineUnderAnalysis, final IProject project) {
 
 		String tipo = "";
 		List<CsvDataMC> csvdatasMC = new ArrayList<CsvDataMC>();
@@ -284,14 +286,14 @@ public class SuitableModule {
 			csvdatasMC.add(new CsvDataMC());
 			i++;
 		}
-		CsvFileWriterMC.writeCsvFileMC(csvdatasMC, ds.getProjectName());
+		CsvFileWriterMC.writeCsvFileMC(csvdatasMC, ds.getProjectName(), AirpPersistence.getFolder(project).getLocation().toString());
 		return "";
 	}
 	
 	private static String calculateBM(final DataStructure ds, String expectedClass,
 			final String methodUnderAnalysis, final ICoefficientStrategy[] coefficientStrategies,
 			final Collection<? extends Object> dependenciesMethodUnderAnalysis, final Map<String, Collection<? extends Object>> classDependencies,
-			final Collection<? extends Object> universeOfDependencies, String blockNum, String tipo, String className) {
+			final Collection<? extends Object> universeOfDependencies, final String blockNum, final String tipo, final String className, final IProject project) {
 
 		List<CsvDataBM> csvdatasBM = new ArrayList<CsvDataBM>();
 		
@@ -386,7 +388,7 @@ public class SuitableModule {
 			//mean=mean/j;
 			csvdatasBM.add(new CsvDataBM());
 
-		CsvFileWriterBM.writeCsvFileBM(csvdatasBM, ds.getProjectName());
+		CsvFileWriterBM.writeCsvFileBM(csvdatasBM, ds.getProjectName(), AirpPersistence.getFolder(project).getLocation().toString());
 		return "";
 	}
 

@@ -21,7 +21,7 @@ public class CsvFileWriterBM {
 	//	csvdatasMC.addAll(csvdataMC);
 	//}
 	
-	public static void writeCsvFileBM(List<CsvDataBM> csvdataBM, String projectName) {
+	public static void writeCsvFileBM(List<CsvDataBM> csvdataBM, String projectName, String projectPath) {
 		
 		//Create new students objects
 		/*
@@ -47,7 +47,7 @@ public class CsvFileWriterBM {
 		FileWriter fileWriter = null;
 				
 		try {
-			fileWriter = new FileWriter(AirpUtil.TEMP_FOLDER + "/"+projectName+"BM.csv", true);
+			fileWriter = new FileWriter(projectPath+"/"+projectName+"BM.csv", true);
 
 			//Write the CSV file header
 			//fileWriter.append(FILE_HEADER.toString());

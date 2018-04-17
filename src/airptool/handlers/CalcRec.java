@@ -9,16 +9,20 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.HashSet;
 
+import org.eclipse.core.resources.IProject;
+
+import airptool.persistence.AirpPersistence;
+
 public class CalcRec {
 	int k;
 	HashSet<DadosView> tab;
 	
-	public CalcRec(){
+	public CalcRec(IProject proj){
 		this.tab = new HashSet<DadosView>();
-		this.tab = CalculaRec();
+		this.tab = CalculaRec(proj);
 	}
 
-	public HashSet<DadosView> CalculaRec() {
+	public HashSet<DadosView> CalculaRec(IProject proj) {
 
 		HashSet<DadosView> recFinal = new HashSet<DadosView>();
 		String temp6, temp7, temp8, temp9, temp10, temp11;
@@ -35,7 +39,7 @@ public class CalcRec {
 
 			String csvFile = "";
 
-			File dir = new File(System.getProperty("user.home") + "/Desktop/temp_view/");
+			File dir = AirpPersistence.getFolder(proj).getLocation().toFile();
 			File[] matches = dir.listFiles(new FilenameFilter() {
 
 				public boolean accept(File dir, String name) {
@@ -124,13 +128,13 @@ public class CalcRec {
 
 								if (MaxMin.equals("Max")) {
 									if(k==0){
-										fxMax = fxMax + ((Math.pow(a, 2)) / (b+a)*(c+a));
+										fxMax = fxMax + ((2*Math.pow(a, 3)+0.1*Math.sqrt(d))/(1.71*Math.pow(a, 2)+1.98*Math.pow(b, 2)+1.78*Math.pow(c, 2)+0.1*d));
 									}
 									else if (k==1){
-										fxMax = fxMax + ((a) / (a + 2*b + 2*c));
+										fxMax = fxMax + ((2*Math.pow(a, 3)+0.85*d)/(1.64*a+1.95*Math.sqrt(b)+0.1*c+0.9*d));
 									}
 									else{
-										fxMax = fxMax + ((a) / (a + b + c + d));
+										fxMax = fxMax + ((0.48*Math.sqrt(a)+1.56*Math.pow(d, 2))/(1.82*a+1.89*b+1.87*Math.pow(c, 2)+0.47*Math.pow(d, 2)));
 									}
 
 									countMax += 1;
@@ -138,13 +142,13 @@ public class CalcRec {
 								} else if (MaxMin.equals("Min")) {
 									entrouMin = true;
 									if(k==0){
-										fxMin = fxMin + ((Math.pow(a, 2)) / (b+a)*(c+a));
+										fxMin = fxMin + ((2*Math.pow(a, 3)+0.1*Math.sqrt(d))/(1.71*Math.pow(a, 2)+1.98*Math.pow(b, 2)+1.78*Math.pow(c, 2)+0.1*d));
 										temp7=country[7];
 										temp8=country[8];
 										temp9=country[9];
 									}
 									else if (k==1){
-										fxMin = fxMin + ((a) / (a + 2*b + 2*c));
+										fxMin = fxMin + ((2*Math.pow(a, 3)+0.85*d)/(1.64*a+1.95*Math.sqrt(b)+0.1*c+0.9*d));
 										temp7=country[7];
 										temp8=country[8];
 										temp9=country[9];
@@ -152,7 +156,7 @@ public class CalcRec {
 										temp11=country[11];
 									}
 									else{
-										fxMin = fxMin + ((a) / (a + b + c + d));
+										fxMin = fxMin + ((0.48*Math.sqrt(a)+1.56*Math.pow(d, 2))/(1.82*a+1.89*b+1.87*Math.pow(c, 2)+0.47*Math.pow(d, 2)));
 										temp6=country[6];
 										temp7=country[7];
 										temp8=country[8];
