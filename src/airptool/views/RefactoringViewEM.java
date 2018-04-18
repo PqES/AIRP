@@ -12,6 +12,9 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+
 import javax.swing.JOptionPane;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -98,7 +101,7 @@ public class RefactoringViewEM extends ViewPart {
 			@Override
 			public String getText(Object element) {
 				DadosView dv = (DadosView) element;
-				return dv.getFx()+"";
+				return new DecimalFormat("##.##").format(dv.getFx());
 			}
 		});
 
@@ -110,7 +113,14 @@ public class RefactoringViewEM extends ViewPart {
 
 		viewer.setContentProvider(ArrayContentProvider.getInstance());
 
-		viewer.setInput(SimilarityReportHandler.recTabEM);
+		ArrayList<DadosView> t = new ArrayList<DadosView>();
+		for(DadosView v : SimilarityReportHandler.recTabEM) {
+			if(v.getFx()>=0.01){
+				t.add(v);
+			}
+		}
+		
+		viewer.setInput(t);
 		getSite().setSelectionProvider(viewer);
 
 		GridData gridData = new GridData();

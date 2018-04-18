@@ -12,7 +12,8 @@ Require-Bundle: org.eclipse.ui,
  airptool,
  org.eclipse.zest.core;bundle-version="1.5.300",
  org.eclipse.zest.layouts;bundle-version="1.1.300",
- org.eclipse.ui.ide
+ org.eclipse.ui.ide,
+ org.eclipse.jface
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
  commons-collections-3.2.1.jar,

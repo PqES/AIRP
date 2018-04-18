@@ -13,6 +13,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 
 import javax.swing.JOptionPane;
 
@@ -112,7 +113,14 @@ public class RefactoringViewMM extends ViewPart {
 
 		viewer.setContentProvider(ArrayContentProvider.getInstance());
 
-		viewer.setInput(SimilarityReportHandler.recTabMM);
+		ArrayList<DadosView> t = new ArrayList<DadosView>();
+		for(DadosView v : SimilarityReportHandler.recTabMM) {
+			if(v.getFx()>=0.01){
+				t.add(v);
+			}
+		}
+		
+		viewer.setInput(t);
 		getSite().setSelectionProvider(viewer);
 
 		GridData gridData = new GridData();

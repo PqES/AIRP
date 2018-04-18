@@ -104,9 +104,12 @@ public class RefactoringViewMC extends ViewPart {
 
 		viewer.setContentProvider(ArrayContentProvider.getInstance());
 
-		DadosView v = SimilarityReportHandler.recTabMC.get(1);
 		ArrayList<DadosView> t = new ArrayList<DadosView>();
-		t.add(v);
+		for(DadosView v : SimilarityReportHandler.recTabMC) {
+			if(v.getFx()>=0.01){
+				t.add(v);
+			}
+		}
 		
 		//viewer.setInput(SimilarityReportHandler.recTabMC);
 		viewer.setInput(t);

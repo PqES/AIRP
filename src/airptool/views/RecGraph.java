@@ -130,10 +130,12 @@ public class RecGraph extends ViewPart implements IZoomableWorkbenchPart {
 				edges.put(dv.getClss_ori(), new HashMap<String,GraphConnection>());
 			}
 			
-			if(!edges.get(dv.getClss_ori()).containsKey(dv.getPkg_des()) && dv.getFx()>=0.01 ) {
-					edges.get(dv.getClss_ori()).put(dv.getPkg_des(), new GraphConnection(g, ZestStyles.CONNECTIONS_DIRECTED,classes.get(dv.getClss_ori()),packages.get(dv.getPkg_des())));
-					edges.get(dv.getClss_ori()).get(dv.getPkg_des()).setText("Move "+dv.getClss_ori().substring(dv.getClss_ori().lastIndexOf(".")+1)+" [+"+fmt(dv.getFx())+"]");
-					edges.get(dv.getClss_ori()).get(dv.getPkg_des()).setVisible(false);
+			if(dv.getFx()>=0.01) {
+				if(!edges.get(dv.getClss_ori()).containsKey(dv.getPkg_des())) {
+						edges.get(dv.getClss_ori()).put(dv.getPkg_des(), new GraphConnection(g, ZestStyles.CONNECTIONS_DIRECTED,classes.get(dv.getClss_ori()),packages.get(dv.getPkg_des())));
+						edges.get(dv.getClss_ori()).get(dv.getPkg_des()).setText("Move "+dv.getClss_ori().substring(dv.getClss_ori().lastIndexOf(".")+1)+" [+"+fmt(dv.getFx())+"]");
+						edges.get(dv.getClss_ori()).get(dv.getPkg_des()).setVisible(false);
+				}
 			}
 
 		}
@@ -176,17 +178,18 @@ public class RecGraph extends ViewPart implements IZoomableWorkbenchPart {
 				edges.put(dv.getClss_ori(), new HashMap<String,GraphConnection>());
 			}
 
-			if(!edges.get(dv.getClss_ori()).containsKey(dv.getClss_des()) && dv.getFx()>=0.01) {
-					edges.get(dv.getClss_ori()).put(dv.getClss_des(), new GraphConnection(g, ZestStyles.CONNECTIONS_DIRECTED,classes.get(dv.getClss_ori()),classes.get(dv.getClss_des())));
-					edges.get(dv.getClss_ori()).get(dv.getClss_des()).setText("Move "+dv.getMet_ori()+"() ["+fmt(dv.getFx())+"]");
+			if(dv.getFx()>=0.01) {
+				if(!edges.get(dv.getClss_ori()).containsKey(dv.getClss_des())) {
+						edges.get(dv.getClss_ori()).put(dv.getClss_des(), new GraphConnection(g, ZestStyles.CONNECTIONS_DIRECTED,classes.get(dv.getClss_ori()),classes.get(dv.getClss_des())));
+						edges.get(dv.getClss_ori()).get(dv.getClss_des()).setText("Move "+dv.getMet_ori()+"() ["+fmt(dv.getFx())+"]");
+						edges.get(dv.getClss_ori()).get(dv.getClss_des()).setVisible(false);
+				}
+				else{
+					String edgesTemp = edges.get(dv.getClss_ori()).get(dv.getClss_des()).getText();
+					edges.get(dv.getClss_ori()).get(dv.getClss_des()).setText(edgesTemp+"\nMove "+dv.getMet_ori()+"() ["+fmt(dv.getFx())+"]");
 					edges.get(dv.getClss_ori()).get(dv.getClss_des()).setVisible(false);
+				}
 			}
-			else if(dv.getFx()>=0.01){
-				String edgesTemp = edges.get(dv.getClss_ori()).get(dv.getClss_des()).getText();
-				edges.get(dv.getClss_ori()).get(dv.getClss_des()).setText(edgesTemp+"\nMove "+dv.getMet_ori()+"() ["+fmt(dv.getFx())+"]");
-				edges.get(dv.getClss_ori()).get(dv.getClss_des()).setVisible(false);
-			}
-			
 		}
 		
 		for (DadosView dv : SimilarityReportHandler.recTabEM) {
@@ -205,30 +208,32 @@ public class RecGraph extends ViewPart implements IZoomableWorkbenchPart {
 				classes.get(dv.getClss_ori()).setForegroundColor(new Color(null,0,0,0));
 			}
 			
-				if(!edges.containsKey(dv.getClss_ori()) && dv.getFx()>=0.01) {
+			if(!edges.containsKey(dv.getClss_ori()) && dv.getFx()>=0.01) {
 				edges.put(dv.getClss_ori(), new HashMap<String,GraphConnection>());
 			}
 			
-			if(!edges.get(dv.getClss_ori()).containsKey(dv.getClss_des()) && dv.getFx()>=0.01) {
-					edges.get(dv.getClss_ori()).put(dv.getClss_des(), new GraphConnection(g, ZestStyles.CONNECTIONS_DIRECTED,classes.get(dv.getClss_ori()),classes.get(dv.getClss_ori())));
-					edges.get(dv.getClss_ori()).get(dv.getClss_des()).setCurveDepth(40);
-					edges.get(dv.getClss_ori()).get(dv.getClss_des()).setVisible(true);
-					
-					edges.get(dv.getClss_ori()).get(dv.getClss_des()).setFont(new Font(null, "Arial", 15, SWT.NORMAL));
-					edges.get(dv.getClss_ori()).get(dv.getClss_des()).setLineColor(new Color(null,1, 0, 72));
-					edges.get(dv.getClss_ori()).get(dv.getClss_des()).setLineWidth(3);
-					edges.get(dv.getClss_ori()).get(dv.getClss_des()).setText("Extract block "+dv.getBlo_ori()+" from\n "+dv.getMet_ori().substring(0, dv.getMet_ori().indexOf("WithExtract"))+"() [+"+fmt(dv.getFx())+"]");
-					
-					edges.get(dv.getClss_ori()).get(dv.getClss_des()).setVisible(true);
-					
-					//classes.get(dv.getClss_ori()).setBackgroundColor(new Color(null,137, 226, 170));
-					classes.get(dv.getClss_ori()).setBorderColor(new Color(null,1, 0, 72));
-					classes.get(dv.getClss_ori()).setBorderWidth(2);
-			}
-			else {
-				String edgesTemp = edges.get(dv.getClss_ori()).get(dv.getClss_des()).getText();
-				edges.get(dv.getClss_ori()).get(dv.getClss_des()).setText(edgesTemp+"\nExtract block "+dv.getBlo_ori()+" from "+dv.getMet_ori().substring(0, dv.getMet_ori().indexOf("WithExtract"))+"() [+"+fmt(dv.getFx())+"]");
-			}
+			if(dv.getFx()>=0.01) {
+				if(!edges.get(dv.getClss_ori()).containsKey(dv.getClss_des())) {
+						edges.get(dv.getClss_ori()).put(dv.getClss_des(), new GraphConnection(g, ZestStyles.CONNECTIONS_DIRECTED,classes.get(dv.getClss_ori()),classes.get(dv.getClss_ori())));
+						edges.get(dv.getClss_ori()).get(dv.getClss_des()).setCurveDepth(40);
+						edges.get(dv.getClss_ori()).get(dv.getClss_des()).setVisible(true);
+						
+						edges.get(dv.getClss_ori()).get(dv.getClss_des()).setFont(new Font(null, "Arial", 15, SWT.NORMAL));
+						//edges.get(dv.getClss_ori()).get(dv.getClss_des()).setLineColor(new Color(null,1, 0, 72));
+						edges.get(dv.getClss_ori()).get(dv.getClss_des()).setLineWidth(3);
+						edges.get(dv.getClss_ori()).get(dv.getClss_des()).setText("Extract block "+dv.getBlo_ori()+" from\n "+dv.getMet_ori().substring(0, dv.getMet_ori().indexOf("WithExtract"))+"() [+"+fmt(dv.getFx())+"]");
+						
+						edges.get(dv.getClss_ori()).get(dv.getClss_des()).setVisible(true);
+						
+						//classes.get(dv.getClss_ori()).setBackgroundColor(new Color(null,137, 226, 170));
+						classes.get(dv.getClss_ori()).setBorderColor(new Color(null,1, 0, 72));
+						classes.get(dv.getClss_ori()).setBorderWidth(2);
+				}
+				else {
+					String edgesTemp = edges.get(dv.getClss_ori()).get(dv.getClss_des()).getText();
+					edges.get(dv.getClss_ori()).get(dv.getClss_des()).setText(edgesTemp+"\nExtract block "+dv.getBlo_ori()+" from "+dv.getMet_ori().substring(0, dv.getMet_ori().indexOf("WithExtract"))+"() [+"+fmt(dv.getFx())+"]");
+				}
+		}
 			
 		}
 		

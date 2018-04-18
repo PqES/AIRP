@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 import java.util.HashMap;
@@ -34,6 +35,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
@@ -121,9 +124,9 @@ public class SimilarityReportHandler extends AbstractHandler {
 				IProject project = (IProject) o;
 				
 				boolean existe = false;
-				int reanalyze=1;
+				int reanalyze=0;
 				
-				File f = new File(AirpPersistence.getFolder(project).getLocation().toString()+"/"+project.getName()+"MC.csv");
+				File f = new File(AirpPersistence.getFolder(project).getLocation().toString()+"/"+project.getName()+"BM.csv");
 				if(f.exists() && !f.isDirectory()) { 
 				    f = new File(AirpPersistence.getFolder(project).getLocation().toString()+"/"+project.getName()+"MC.csv");
 				    if(f.exists() && !f.isDirectory()) {
@@ -135,10 +138,20 @@ public class SimilarityReportHandler extends AbstractHandler {
 				}
 				
 				if(existe){
-					reanalyze = JOptionPane.showConfirmDialog(null,"The project has already been previously analyzed. Do you want to reanalyze it?? ","Reanalyze",JOptionPane.YES_NO_CANCEL_OPTION);
+					MessageDialog dg = new MessageDialog(shell,"Reanalyze",null,"The project has already been previously analyzed. Do you want to reanalyze it?",MessageDialog.QUESTION, new String[]{IDialogConstants.YES_LABEL,IDialogConstants.NO_LABEL},0);
+					switch(dg.open()) {
+					    case 0: 
+					        //yes
+					    		reanalyze=0;
+					        break;
+					    case 1:
+					        //no
+					    		reanalyze=1;
+					        break;
+					}
 				}
 				
-				if(reanalyze == JOptionPane.YES_OPTION) {
+				if(reanalyze == 0) {
 				IJavaProject javaProject = JavaCore.create(project);
 				DataStructure ds = this.init(project);
 
