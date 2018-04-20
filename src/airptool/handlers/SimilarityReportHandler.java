@@ -296,6 +296,9 @@ public class SimilarityReportHandler extends AbstractHandler {
 			            }
 			    }});
 				
+				recTabMC = AirpUtil.removeDuplicatesMC(recTabMC);
+				recTabMM = AirpUtil.removeDuplicatesMM(recTabMM);
+				recTabEM = AirpUtil.removeDuplicatesEM(recTabEM);
 				//IJavaProject javaProject2 = JavaCore.create(project);
 				//DataStructure ds2 = this.init(project);
 				//ZestGraph rc = new ZestGraph();

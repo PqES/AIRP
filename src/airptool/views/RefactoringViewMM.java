@@ -56,15 +56,17 @@ public class RefactoringViewMM extends ViewPart {
 	 * The ID of the view as specified by the extension.
 	 */
 	public static final String ID = "airptool.views.RefactoringViewMM";
-
+	
+	private String[] selectedMM = {"","","",""};
 	private TableViewer viewer;
 	private Action doubleClickAction;
-	private Action applyRemodularizationAction;
+	private Action selectionChangedAction;
+	//private Action applyRemodularizationAction;
 
 	public void createPartControl(Composite parent) {
 		GridLayout layout = new GridLayout(1, false);
 		parent.setLayout(layout);
-		viewer = new TableViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
+		viewer = new TableViewer(parent, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
 
 		String[] titles = { "Source Class", "Source Method", "Target Class", "Upgrade"  };
 		int[] bounds = { 150, 150, 150, 150 };
@@ -135,6 +137,7 @@ public class RefactoringViewMM extends ViewPart {
 		hookContextMenu();
 		contributeToActionBars();
 		hookDoubleClickAction();
+		hookSelectedAction();
 
 	}
 
@@ -152,6 +155,25 @@ public class RefactoringViewMM extends ViewPart {
 		return viewerColumn;
 	}
 
+	private void hookSelectedAction() {
+		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+			public void selectionChanged(SelectionChangedEvent event) {
+				selectionChangedAction.run();
+			}
+		});
+
+		selectionChangedAction = new Action() {
+			public void run() {
+				selectedMM[0]=viewer.getTable().getSelection()[0].getText(0);
+				selectedMM[1]=viewer.getTable().getSelection()[0].getText(1);
+				selectedMM[2]=viewer.getTable().getSelection()[0].getText(2);
+				selectedMM[3]=viewer.getTable().getSelection()[0].getText(3);
+				RecGraph graph = (RecGraph)PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findView("airptool.views.RecGraph");
+				graph.updateEdgeMM(selectedMM);
+			}
+		};
+	}
+	
 	private void hookDoubleClickAction() {
 		viewer.addDoubleClickListener(new IDoubleClickListener() {
 			public void doubleClick(DoubleClickEvent event) {
@@ -186,25 +208,25 @@ public class RefactoringViewMM extends ViewPart {
 	}
 
 	private void fillLocalPullDown(IMenuManager manager) {
-		manager.add(applyRemodularizationAction);
+		//manager.add(applyRemodularizationAction);
 		manager.add(new Separator());
 	}
 
 	private void fillContextMenu(IMenuManager manager) {
-		manager.add(applyRemodularizationAction);
+		//manager.add(applyRemodularizationAction);
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 
 	private void fillLocalToolBar(IToolBarManager manager) {
-		manager.add(applyRemodularizationAction);
+		//manager.add(applyRemodularizationAction);
 
 	}
 
 	private void makeActions() {
-		applyRemodularizationAction = new Action() {
+		/*applyRemodularizationAction = new Action() {
 			public void run() {
 
-				/*SampleHandler.dadosNovaArq.clear();
+				SampleHandler.dadosNovaArq.clear();
 
 				IWorkbenchPage wp = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 
@@ -221,13 +243,17 @@ public class RefactoringViewMM extends ViewPart {
 					e.printStackTrace();
 				}
 
-			*/}
+			}
 
 		};
 
 		applyRemodularizationAction.setToolTipText("Apply Remodularization");
 		applyRemodularizationAction.setImageDescriptor(
 				PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_TOOL_FORWARD));
-		applyRemodularizationAction.setEnabled(true);
+		applyRemodularizationAction.setEnabled(true);*/
+	}
+	
+	public String[] getSelection(){
+		return selectedMM;
 	}
 }

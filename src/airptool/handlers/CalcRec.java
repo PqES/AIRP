@@ -169,10 +169,11 @@ public class CalcRec {
 						} else if (country[0].equals("-")) {
 							if (currentIsMax) {
 								fxMax = (fxMax / countMax);
+								if(fxMax>1) fxMax=fxMax/60;
 								countMax = 0;
 							} else {
 								fxMin = (fxMin / countMin);
-								
+								if(fxMin>1) fxMin=fxMin/60;
 								if(k==0){
 									fxMinRec.add(new DadosView(fxMin,temp7, temp8, temp9));
 								}

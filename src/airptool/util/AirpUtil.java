@@ -36,6 +36,8 @@ import org.eclipse.jdt.core.JavaModelException;
 
 import airptool.builder.AirpBuilder;
 import airptool.core.DataStructure;
+import airptool.handlers.DadosView;
+import airptool.handlers.SimilarityReportHandler;
 
 //TODO: MUITOS metodos comentados no Util. Verificar se deve mudar isso
 
@@ -902,5 +904,64 @@ public final class AirpUtil {
 		            method.getName().matches("^set[A-Z].*");
 	}
 	
+	public static ArrayList<DadosView> removeDuplicatesMC(ArrayList<DadosView> dvtarget){ 
+		ArrayList<DadosView> t = new ArrayList<DadosView>();
+		Set<DadosView> set = new HashSet<DadosView>(dvtarget);
+		boolean repeated = false;
+		for(DadosView v : set) {
+			repeated=false;
+			if(v.getFx()>=0.01){
+				for(DadosView dv : t) {
+					if(dv.getClss_ori().equals(v.getClss_ori()) && dv.getPkg_des().equals(v.getPkg_des())) {
+						repeated=true;
+					}
+				}
+				if(!repeated) {
+					t.add(v);
+				}
+			}
+		}
+		return t;
+	}
+	
+	public static ArrayList<DadosView> removeDuplicatesMM(ArrayList<DadosView> dvtarget){ 
+		ArrayList<DadosView> t = new ArrayList<DadosView>();
+		Set<DadosView> set = new HashSet<DadosView>(dvtarget);
+		boolean repeated = false;
+		for(DadosView v : set) {
+			repeated=false;
+			if(v.getFx()>=0.01){
+				for(DadosView dv : t) {
+					if(dv.getClss_ori().equals(v.getClss_ori()) && dv.getMet_ori().equals(v.getMet_ori()) && dv.getClss_des().equals(v.getClss_des())) {
+						repeated=true;
+					}
+				}
+				if(!repeated) {
+					t.add(v);
+				}
+			}
+		}
+		return t;
+	}
+	
+	public static ArrayList<DadosView> removeDuplicatesEM(ArrayList<DadosView> dvtarget){ 
+		ArrayList<DadosView> t = new ArrayList<DadosView>();
+		Set<DadosView> set = new HashSet<DadosView>(dvtarget);
+		boolean repeated = false;
+		for(DadosView v : set) {
+			repeated=false;
+			if(v.getFx()>=0.01){
+				for(DadosView dv : t) {
+					if(dv.getClss_ori().equals(v.getClss_ori()) && dv.getMet_ori().equals(v.getMet_ori()) && dv.getBlo_ori().equals(v.getBlo_ori())) {
+						repeated=true;
+					}
+				}
+				if(!repeated) {
+					t.add(v);
+				}
+			}
+		}
+		return t;
+	}
 }
 
